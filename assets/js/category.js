@@ -294,10 +294,15 @@
   function skeleton() {
     host.innerHTML = `
     <section class="page-hero"><div class="wrap">
-      <div class="breadcrumb"><a href="./" data-i18n="nav.home">${t("nav.home")}</a> ${arrow("right")} <span data-i18n="cat.${cat}">${t("cat." + cat)}</span></div>
-      <div class="page-title">
-        <span class="page-icon" style="color:${accent}">${icon(cfg.ic)}</span>
-        <h1 data-i18n="cat.${cat}">${t("cat." + cat)}</h1>
+      <div class="hero-cockpit">
+        <div class="hero-title-box">
+          <div class="breadcrumb"><a href="./" data-i18n="nav.home">${t("nav.home")}</a> ${arrow("right")} <span data-i18n="cat.${cat}">${t("cat." + cat)}</span></div>
+          <div class="page-title">
+            <span class="page-icon" style="color:${accent}">${icon(cfg.ic)}</span>
+            <h1 data-i18n="cat.${cat}">${t("cat." + cat)}</h1>
+          </div>
+        </div>
+        <div class="hero-kpi-box" id="catKpi"></div>
       </div>
     </div></section>
     <section class="cat-wrap"><div class="wrap">
@@ -312,66 +317,12 @@
   /* ---------- Filtreler ---------- */
   function renderFilters() {
     const box = document.getElementById("catFilters");
-    if (cfg.quad) return renderFiltersQuad(box);
+    if (!box) return;
     if (cfg.yearsOnly) return renderFiltersYearsOnly(box);
-
-    const avail = curAvail();
-    let h = `<div class="filter-head">${icon(cfg.ic)} <span data-i18n="ui.filter">${t("ui.filter")}</span></div>`;
-
-    h += `<div class="filter-group"><label for="fYear" data-i18n="ui.year">${t("ui.year")}</label>
-      <select class="filter-select" id="fYear">
-        ${years.map((y) => `<option value="${y}"${y === state.years[0] ? " selected" : ""}>${y}</option>`).join("")}
-      </select></div>`;
-
-    if (avail.length) {
-      h += `<div class="filter-group">
-        <label><span data-i18n="ui.month">${t("ui.month")}</span><span class="filter-actions">
-          <button type="button" data-mall data-i18n="ui.all">${t("ui.all")}</button>
-          <button type="button" data-mnone data-i18n="ui.clear">${t("ui.clear")}</button></span></label>
-        <div class="filter-months">${avail.map((mo) =>
-          `<button type="button" data-month="${mo}" class="${state.months.includes(mo) ? "on" : ""}" data-i18n="month.${mo}">${MON()[mo - 1]}</button>`).join("")}</div>
-        <div class="filter-note">${state.months.length}/${avail.length} <span data-i18n="ui.monthSelected">${t("ui.monthSelected")}</span></div>
-      </div>`;
-    }
-
-    if (cfg.series.length) {
-      h += `<div class="filter-group"><label data-i18n="ui.series">${t("ui.series")}</label><div class="filter-regions">
-        <button type="button" data-seri="toplam" class="${state.seri === "toplam" ? "on" : ""}" data-i18n="ui.total">${t("ui.total")}</button>
-        ${cfg.series.map((s) => `<button type="button" data-seri="${s.k}" class="${state.seri === s.k ? "on" : ""}" data-i18n="${s.key}">${nm(s)}</button>`).join("")}
-      </div></div>`;
-    }
-
-    if (pRows().length) {
-      h += `<div class="filter-group"><label data-i18n="ui.region">${t("ui.region")}</label><div class="filter-regions">
-        <button type="button" data-region="all" class="${state.region === "all" ? "on" : ""}" data-i18n="ui.all">${t("ui.all")}</button>
-        ${SEAS.map(([v, key]) => `<button type="button" data-region="${v}" class="${state.region === v ? "on" : ""}" data-i18n="${key}">${t(key)}</button>`).join("")}
-      </div></div>`;
-    }
-
-    h += `<a class="btn btn-ghost filter-src" href="dosyalar?kat=${cfg.arch}"><span data-i18n="ui.viewFiles">${t("ui.viewFiles")}</span> ${arrow("right")}</a>`;
-    box.innerHTML = h;
-
-    box.querySelector("#fYear").addEventListener("change", (e) => {
-      state.years = [+e.target.value];
-      state.months = curAvail();
-      renderFilters(); renderDash();
-    });
-    box.querySelectorAll("[data-month]").forEach((b) => b.addEventListener("click", () => {
-      const mo = +b.dataset.month, i = state.months.indexOf(mo);
-      if (i >= 0) { if (state.months.length > 1) state.months.splice(i, 1); } else state.months.push(mo);
-      state.months.sort((x, y) => x - y);
-      renderFilters(); renderDash();
-    }));
-    const bAll = box.querySelector("[data-mall]"), bNone = box.querySelector("[data-mnone]");
-    if (bAll) bAll.addEventListener("click", () => { state.months = curAvail(); renderFilters(); renderDash(); });
-    if (bNone) bNone.addEventListener("click", () => { state.months = curAvail().slice(0, 1); renderFilters(); renderDash(); });
-    box.querySelectorAll("[data-seri]").forEach((b) => b.addEventListener("click", () => {
-      state.seri = b.dataset.seri; renderFilters(); renderDash();
-    }));
-    box.querySelectorAll("[data-region]").forEach((b) => b.addEventListener("click", () => {
-      state.region = b.dataset.region; renderFilters(); renderDash();
-    }));
+    return renderFiltersQuad(box);
   }
+
+
 
   /* ---------- Filtreler: çoklu seçim (gemi) ---------- */
   function ddBlock(key, labelKey, summary, items, selected, itemI18nKeys) {
@@ -545,12 +496,15 @@
     if (cfg.donut && bRows().some((r) => r.boyut === cfg.donut.dim)) cards += dashCard("dDonut", t(cfg.donut.key), unit, cfg.donut.key);
     if (cfg.barsDim && bRows().some((r) => r.boyut === cfg.barsDim.dim)) cards += dashCard("dBars", t(cfg.barsDim.key), unit, cfg.barsDim.key);
 
-    box.innerHTML = head + `<div class="dash-cards">${cards}</div>`;
+    const kpiBox = document.getElementById("catKpi");
+    const dashBox = document.getElementById("catDash");
+    if (kpiBox) kpiBox.innerHTML = head;
+    if (dashBox) dashBox.innerHTML = `<div class="dash-cards">${cards}</div>`;
     setTimeout(draw, 40);
   }
 
   /* ---------- Dashboard: bildirimli KPI panosu (cfg.cards/cfg.charts — gemi, yük, …) ---------- */
-  function renderDashQuad(box) {
+  function renderDashQuad() {
     const avail = curAvail(), unit = t(cfg.unit);
     const partial = avail.length && state.months.length < avail.length;
     const ysum = yearsSummary();
@@ -580,7 +534,10 @@
       return dashCard(ch.id, t(ch.titleKey), s2, ch.titleKey, isWide);
     }).join("");
 
-    box.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.cards.length}">${cardsHtml}</div><div class="dash-cards">${chartsHtml}</div>`;
+    const kpiBox = document.getElementById("catKpi");
+    const dashBox = document.getElementById("catDash");
+    if (kpiBox) kpiBox.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.cards.length}">${cardsHtml}</div>`;
+    if (dashBox) dashBox.innerHTML = `<div class="dash-cards">${chartsHtml}</div>`;
     setTimeout(draw, 40);
   }
 
@@ -597,7 +554,7 @@
             note: "Bu bir stok değeridir (yılsonu filosu), yıllar toplanamaz — seçili en güncel yılın veritabanındaki değeri gösteriliyor. Değiştirmek için aşağıdaki ilgili grafikte o yıla tıkla." },
   };
 
-  function renderDashYearsOnly(box) {
+  function renderDashYearsOnly() {
     const ysum = yearsSummary();
 
     const cardsHtml = cfg.metrics.map((mt) => {
@@ -628,7 +585,11 @@
       const latestY = Math.max(...state.years);
       cards += dashCard("dBars", t(cfg.barsDim.key), `${latestY} · ${t(cfg.unit)}`, cfg.barsDim.key);
     }
-    box.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.metrics.length}">${cardsHtml}</div><div class="dash-cards">${cards}</div>`;
+
+    const kpiBox = document.getElementById("catKpi");
+    const dashBox = document.getElementById("catDash");
+    if (kpiBox) kpiBox.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.metrics.length}">${cardsHtml}</div>`;
+    if (dashBox) dashBox.innerHTML = `<div class="dash-cards">${cards}</div>`;
     setTimeout(draw, 40);
   }
 
@@ -1144,25 +1105,17 @@
     return out;
   }
 
-  async function start() {
-    const MD = window.MARITIME_DATA;
-    H = MD.headline; P = MD.ports; T = MD.trend;
-    try {
-      DET = await loadDetailFromSupabase(cat);
-      console.info(`[category] ${cat}: detay veri Supabase'den yüklendi.`);
-    } catch (e) {
-      DET = window.DETAIL_DATA || { monthly: [], ports: [], breakdown: [] };
-      console.warn(`[category] ${cat}: Supabase'den yüklenemedi, statik yedeğe düşüldü:`, e.message);
-    }
-    m = H[cfg.headKey];
+  function start() {
+    const MD = window.MARITIME_DATA || {};
+    H = MD.headline || {}; P = MD.ports || []; T = MD.trend || {};
+    DET = window.DETAIL_DATA || { monthly: [], ports: [], breakdown: [] };
+    m = (H && H[cfg.headKey]) || { deger: 0, yil: 2026 };
     accent = getComputedStyle(document.documentElement).getPropertyValue(cfg.accent).trim();
     document.title = t("cat." + cat) + " — " + t("site.title");
-    // quad sayfalarda (gemi, yük, …) filtre paneli sabit değil — sayfayla kayar
     if (cfg.quad) document.body.classList.add("cat-quad");
 
     const ys = new Set();
     if (cfg.yearsOnly) {
-      // Ay/liman kırılımı yok — yıl listesi doğrudan her metriğin trend yıllarından
       cfg.metrics.forEach((mt) => { const tr2 = T[mt.key]; if (tr2) Object.keys(tr2).forEach((y) => ys.add(+y)); });
     } else {
       mRows().forEach((r) => ys.add(r.yil));
@@ -1170,23 +1123,35 @@
       const tr = catTrend();
       if (tr) Object.keys(tr).forEach((y) => ys.add(+y));
     }
-    if (!ys.size) ys.add(m.yil);
-    // yearMin: bazı sayfalarda kaynak veri belirli bir yıldan önce farklı/eksik formatta
-    // (örn. konteyner'de bayrak/rejim/cins kırılımı yalnız 2020+ tutarlı) — o yıllar listeden
-    // çıkarılır; eski toplam/yükleme/boşaltma serileri etkilenmez, sadece bu sayfada gizlenir.
+    if (!ys.size && m.yil) ys.add(m.yil);
     const yFiltered = cfg.yearMin ? [...ys].filter((y) => y >= cfg.yearMin) : [...ys];
     years = yFiltered.sort((a, b) => b - a);
 
-    // defaultYearSpan yoksa (çoğu sayfa) tek en güncel yıl — eskisiyle birebir aynı davranış
     const span = cfg.defaultYearSpan || 1;
     state = { years: years.slice(0, Math.min(span, years.length)), months: [], seri: "toplam", region: "all",
       tip: "tumu", bayrak: "toplam" };
     state.months = curAvail();
-    closeAllDD(); // sayfa ilk açıldığında yıl/ay açılır listeleri kesin kapalı başlasın
+    closeAllDD();
 
-    skeleton(); renderFilters(); renderDash(); renderArchive();
+    skeleton();
+    renderFilters();
+    renderDash();
+    renderArchive();
     window.MDScan && window.MDScan();
+
+    // Arka planda Supabase'den canlı veri varsa çekip sessizce güncelle (sayfa açılışını asla bekletmez)
+    loadDetailFromSupabase(cat).then((live) => {
+      if (live && (live.monthly?.length || live.ports?.length || live.breakdown?.length)) {
+        DET = live;
+        renderFilters();
+        renderDash();
+        renderArchive();
+        console.info(`[category] ${cat}: Supabase verisi güncellendi.`);
+      }
+    }).catch(() => {
+      console.info(`[category] ${cat}: yerel veri devrede.`);
+    });
   }
 
-  Promise.all([window.MD_READY || Promise.resolve(), window.MD_I18N_READY || Promise.resolve()]).then(start);
+  start();
 })();

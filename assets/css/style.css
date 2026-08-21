@@ -573,24 +573,37 @@ body::after {
 .cat-card:hover .go svg { transform: translateX(4px); }
 
 /* ============================================================
-   Sayfa başlığı (iç sayfalar)
+   Sayfa başlığı (iç sayfalar) — Başlık + Yan yana KPI panosu
    ============================================================ */
-/* ============================================================
-   Sayfa başlığı (iç sayfalar)
-   ============================================================ */
-.page-hero { padding: 20px 0 12px; position: relative; }
-.page-hero .breadcrumb { display: flex; gap: 6px; align-items: center; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 8px; }
-.page-hero .breadcrumb svg { width: 12px; height: 12px; flex: none; opacity: 0.7; }
-.page-title { display: flex; align-items: center; gap: 12px; }
-.page-icon {
-  width: 42px; height: 42px; flex: none; border-radius: 11px;
+.page-hero { padding: 16px 0 8px; position: relative; }
+.hero-cockpit {
+  display: flex; align-items: stretch; justify-content: space-between; gap: 20px;
+}
+.hero-title-box {
+  flex: 0 0 270px; display: flex; flex-direction: column; justify-content: center;
+}
+.hero-title-box .breadcrumb { display: flex; gap: 6px; align-items: center; font-size: 0.78rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; }
+.hero-title-box .breadcrumb svg { width: 12px; height: 12px; flex: none; opacity: 0.7; }
+.hero-title-box .breadcrumb a:hover { color: var(--sky-200); }
+.hero-title-box .page-title { display: flex; align-items: center; gap: 10px; }
+.hero-title-box .page-icon {
+  width: 38px; height: 38px; flex: none; border-radius: 10px;
   display: grid; place-items: center;
   background: var(--surface-2); border: 1px solid var(--border);
 }
-.page-icon svg { width: 22px; height: 22px; }
-.page-hero .breadcrumb a:hover { color: var(--sky-200); }
-.page-hero h1 { font-size: clamp(1.6rem, 2.4vw, 2.1rem); font-weight: 800; letter-spacing: -0.02em; }
-.page-hero .intro { margin-top: 10px; font-size: 1rem; color: var(--text-soft); max-width: 60ch; }
+.hero-title-box .page-icon svg { width: 20px; height: 20px; }
+.hero-title-box h1 { font-size: clamp(1.35rem, 1.9vw, 1.8rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+
+.hero-kpi-box {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: stretch;
+}
+.hero-kpi-box .dash-quad, .hero-kpi-box .dash-stat {
+  width: 100%;
+}
+@media (max-width: 1060px) {
+  .hero-cockpit { flex-direction: column; gap: 12px; }
+  .hero-title-box { flex: none; }
+}
 
 /* Arşiv / dosya tablosu */
 .data-table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: var(--radius); }
@@ -604,50 +617,50 @@ body::after {
 /* ============================================================
    Kategori sayfası: sol filtre + sağ dashboard + alt arşiv
    ============================================================ */
-.cat-wrap { padding: 10px 0 50px; }
-.cat-layout { display: grid; grid-template-columns: 230px 1fr; gap: 20px; align-items: start; }
+.cat-wrap { padding: 8px 0 45px; }
+.cat-layout { display: grid; grid-template-columns: 230px 1fr; gap: 18px; align-items: start; }
 
 /* Filtre paneli */
 .cat-filters {
-  position: sticky; top: 80px;
-  padding: 16px; border-radius: var(--radius);
+  position: sticky; top: 76px;
+  padding: 14px; border-radius: var(--radius);
   background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-soft);
 }
 /* Çoklu-yıl açılır listeli (quad) sayfalar — istek üzerine sabit değil,
    sayfayla birlikte kayar. Tekli-yıl seçmeli diğer kategori sayfaları etkilenmez. */
 body.cat-quad .cat-filters { position: static; top: auto; }
-.filter-head { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 0.92rem; padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px solid var(--border); color: var(--white); }
-.filter-head svg { width: 17px; height: 17px; color: var(--accent); }
-.filter-group { margin-bottom: 14px; }
-.filter-group > label { display: block; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
-.filter-years, .filter-regions { display: flex; flex-wrap: wrap; gap: 6px; }
+.filter-head { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 0.9rem; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid var(--border); color: var(--white); }
+.filter-head svg { width: 16px; height: 16px; color: var(--accent); }
+.filter-group { margin-bottom: 12px; }
+.filter-group > label { display: block; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; }
+.filter-years, .filter-regions { display: flex; flex-wrap: wrap; gap: 5px; }
 .filter-years button, .filter-regions button {
-  padding: 5px 9px; border-radius: 7px; font-size: 0.78rem; font-weight: 700;
+  padding: 5px 8px; border-radius: 7px; font-size: 0.78rem; font-weight: 700;
   background: var(--surface-2); border: 1px solid var(--border); color: var(--text-soft); transition: 0.18s;
 }
 .filter-years button:hover, .filter-regions button:hover { color: var(--white); border-color: var(--border-strong); }
 .filter-years button.on, .filter-regions button.on { background: var(--sea-500); border-color: var(--sea-500); color: #fff; }
-.filter-note { font-size: 0.74rem; color: var(--text-dim); line-height: 1.4; padding: 8px 10px; background: var(--surface-2); border-radius: 8px; margin-bottom: 12px; }
-.filter-src { width: 100%; justify-content: center; font-size: 0.8rem; padding: 8px 12px; }
+.filter-note { font-size: 0.72rem; color: var(--text-dim); line-height: 1.35; padding: 6px 8px; background: var(--surface-2); border-radius: 7px; margin-bottom: 10px; }
+.filter-src { width: 100%; justify-content: center; font-size: 0.78rem; padding: 7px 10px; }
 
 /* Sağ dashboard */
 .cat-dash { min-width: 0; }
-.dash-stat { position: relative; overflow: hidden; padding: 18px 20px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-soft); }
+.dash-stat { position: relative; overflow: hidden; padding: 14px 16px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-soft); }
 .dash-stat::before { content: ""; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: var(--kc, var(--accent)); }
-.ds-top { display: flex; align-items: center; gap: 9px; }
-.ds-ic { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: var(--kc); background: color-mix(in srgb, var(--kc) 12%, transparent); }
-.ds-ic svg { width: 17px; height: 17px; }
-.ds-label { font-weight: 700; font-size: 0.95rem; color: var(--text-soft); }
-.ds-num { margin-top: 10px; font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 3vw, 2.7rem); letter-spacing: -0.03em; color: var(--white); line-height: 1.1; }
-.ds-unit { font-size: 0.9rem; font-weight: 700; color: var(--text-soft); }
-.ds-sub { margin-top: 6px; font-size: 0.84rem; font-weight: 600; color: var(--text-dim); }
+.ds-top { display: flex; align-items: center; gap: 8px; }
+.ds-ic { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: var(--kc); background: color-mix(in srgb, var(--kc) 12%, transparent); }
+.ds-ic svg { width: 15px; height: 15px; }
+.ds-label { font-weight: 700; font-size: 0.88rem; color: var(--text-soft); }
+.ds-num { margin-top: 6px; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.6rem, 2.2vw, 2.2rem); letter-spacing: -0.02em; color: var(--white); line-height: 1.1; }
+.ds-unit { font-size: 0.82rem; font-weight: 700; color: var(--text-soft); }
+.ds-sub { margin-top: 4px; font-size: 0.76rem; font-weight: 600; color: var(--text-dim); }
 
-.dash-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-.dash-card { padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-soft); }
+.dash-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 0; }
+.dash-card { padding: 14px 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-soft); }
 .dash-card.wide { grid-column: 1 / -1; }
-.dash-card h3 { font-size: 1.05rem; font-weight: 800; }
-.dash-card .csub { color: var(--text-dim); font-size: 0.82rem; font-weight: 600; margin-top: 3px; }
-.dash-card .chart-holder { margin-top: 10px; }
+.dash-card h3 { font-size: 0.98rem; font-weight: 800; }
+.dash-card .csub { color: var(--text-dim); font-size: 0.78rem; font-weight: 600; margin-top: 2px; }
+.dash-card .chart-holder { margin-top: 8px; }
 .cat-dash .insight { margin-top: 16px; }
 
 /* Alt arşiv */

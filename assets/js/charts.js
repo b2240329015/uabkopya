@@ -56,7 +56,7 @@
   /* ---------- Line / Area ---------- */
   function lineArea(host, opts) {
     host.innerHTML = "";
-    const W = 720, H = 260, pad = { t: 18, r: 16, b: 32, l: 56 };
+    const W = 720, H = 220, pad = { t: 16, r: 16, b: 28, l: 52 };
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const xs = opts.labels;
     const allVals = opts.series.flatMap((s) => s.values);
@@ -121,12 +121,12 @@
   function bars(host, opts) {
     host.innerHTML = "";
     const items = opts.items;
-    const fs = opts.labelFontSize || 13;
-    const barH = 20;
-    const W = 720, rowH = Math.max(36, barH + 16), H = items.length * rowH + 14;
+    const fs = opts.labelFontSize || 12.5;
+    const barH = 16;
+    const W = 720, rowH = Math.max(30, barH + 12), H = items.length * rowH + 10;
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const max = Math.max(...items.map((d) => d.value)) * 1.02;
-    const labelW = Math.max(150, fs * 11), barMax = W - labelW - 80;
+    const labelW = Math.max(140, fs * 10.5), barMax = W - labelW - 75;
     items.forEach((d, i) => {
       const y = 12 + i * rowH, barY = y + (rowH - 20 - barH) / 2, mid = barY + barH / 2 + fs * 0.35;
       const lbl = el("text", { x: 0, y: mid, class: "axis-label", "font-size": fs });
@@ -161,7 +161,7 @@
   /* ---------- Donut ---------- */
   function donut(host, opts) {
     host.innerHTML = "";
-    const W = 280, R = 110, r = 68, cx = W / 2, cy = W / 2;
+    const W = 240, R = 95, r = 58, cx = W / 2, cy = W / 2;
     const svg = el("svg", { viewBox: `0 0 ${W} ${W}`, preserveAspectRatio: "xMidYMid meet" });
     const total = opts.items.reduce((s, d) => s + d.value, 0);
     let ang = -Math.PI / 2;
@@ -188,10 +188,10 @@
       svg.appendChild(path);
       ang = a2;
     });
-    const cLabel = el("text", { x: cx, y: cy - 4, "text-anchor": "middle", "font-family": "var(--font-display)", "font-weight": 800, "font-size": 26, fill: "var(--white)" });
+    const cLabel = el("text", { x: cx, y: cy - 3, "text-anchor": "middle", "font-family": "var(--font-display)", "font-weight": 800, "font-size": 22, fill: "var(--white)" });
     const hv = window.MDUtil.human(total); cLabel.textContent = hv.v;
     svg.appendChild(cLabel);
-    const cSub = el("text", { x: cx, y: cy + 22, "text-anchor": "middle", "font-size": 14, fill: "var(--text-dim)" });
+    const cSub = el("text", { x: cx, y: cy + 18, "text-anchor": "middle", "font-size": 12, fill: "var(--text-dim)" });
     cSub.textContent = (hv.u ? hv.u + " " : "") + (opts.unit || ""); svg.appendChild(cSub);
     host.appendChild(svg);
   }
@@ -224,7 +224,7 @@
   function columns(host, opts) {
     host.innerHTML = "";
     const labels = opts.labels, series = opts.series, stacked = !!opts.stacked;
-    const W = 760, H = 250, pad = { t: 16, r: 14, b: 34, l: 54 };
+    const W = 760, H = 220, pad = { t: 14, r: 14, b: 30, l: 50 };
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
     const totals = labels.map((_, i) =>
@@ -336,7 +336,7 @@
     host.innerHTML = "";
     const items = (opts.items || []).filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
     if (!items.length) { host.innerHTML = '<p class="csub">—</p>'; return; }
-    const W = 720, H = 280;
+    const W = 720, H = 240;
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const rects = squarify(items, 0, 0, W, H);
     rects.forEach((r) => {
