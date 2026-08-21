@@ -628,7 +628,7 @@ body.cat-quad .cat-filters { position: static; top: auto; }
 
 /* Sağ dashboard */
 .cat-dash { min-width: 0; }
-.dash-stat { position: relative; overflow: hidden; padding: 14px 16px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-soft); }
+.dash-stat { position: relative; overflow: hidden; padding: 14px 16px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-soft); margin-bottom: 16px; }
 .dash-stat::before { content: ""; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: var(--kc, var(--accent)); }
 .ds-top { display: flex; align-items: center; gap: 8px; }
 .ds-ic { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: var(--kc); background: color-mix(in srgb, var(--kc) 12%, transparent); }
@@ -1030,6 +1030,7 @@ body.cat-quad .cat-filters { position: static; top: auto; }
   display: grid; grid-template-columns: repeat(var(--card-count, 4), 1fr); gap: 0;
   border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
   background: var(--surface); box-shadow: var(--shadow-soft);
+  margin-bottom: 16px;
 }
 .dq-card { position: relative; padding: 14px 16px 12px; border-right: 1px solid var(--border);
   display: flex; flex-direction: column; }
