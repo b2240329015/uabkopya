@@ -40,12 +40,11 @@
     const up = m.yoy >= 0;
     const lbl = t(k.labelKey);
     const delta = hasYoy
-      ? `<span class="kpi-delta ${up ? "up" : "down"}" ${ed({ t: "metrics", m: { key: k.key }, f: "yoy", l: lbl + " — geçen yıla göre % değişim", k: "num" })}>${up ? arrow("up") : arrow("down")} %${Math.abs(m.yoy).toString().replace(".", ",")}</span>`
+      ? `<span class="kpi-delta ${up ? "up" : "down"}" ${ed({ t: "metrics", m: { key: k.key }, f: "yoy", l: lbl + " — geçen yıla göre % değişim", k: "num" })}>
+          ${up ? arrow("up") : arrow("down")} %${Math.abs(m.yoy).toString().replace(".", ",")}
+          <span class="kpi-delta-txt">(${t("kpi.vsYear").replace("{y}", m.yil - 1)})</span>
+        </span>`
       : `<span class="kpi-year" ${ed({ t: "metrics", m: { key: k.key }, f: "year", l: lbl + " — veri yılı", k: "num" })}>${m.yil}</span>`;
-    // Karşılaştırma periyodu açıkça yazılsın: "20XX'e göre" (yoy hep önceki yıla karşı hesaplanıyor)
-    const compareCap = hasYoy
-      ? `<div class="kpi-compare" data-derived="Bu metin metriğin “yıl” alanından hesaplanıyor: her zaman bir önceki yıla göre. Değiştirmek için Metrikler panelini kullan.">${t("kpi.vsYear").replace("{y}", m.yil - 1)}</div>`
-      : "";
     const mag = hv.uKey ? `<span data-i18n="${hv.uKey}">${hv.u}</span> ` : "";
     return `<a class="kpi-card reveal" href="${k.href}" style="--kc:var(${k.c})">
       <div class="kpi-top">
@@ -54,9 +53,7 @@
         ${delta}
       </div>
       <div class="kpi-num"><span data-count="${hv.v.replace(",", ".")}" data-dec="${hv.v.includes(",") ? 1 : 0}" data-metric-key="${k.key}">${hv.v}</span><span class="kpi-unit">${mag}<span data-i18n="${k.unitKey}">${t(k.unitKey)}</span></span></div>
-      ${compareCap}
       <div class="kpi-spark" id="spark-${k.key}"></div>
-
       <span class="kpi-go"><span data-i18n="ui.detail">${t("ui.detail")}</span> ${arrow("right")}</span>
     </a>`;
   }

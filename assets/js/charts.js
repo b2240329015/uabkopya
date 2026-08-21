@@ -123,12 +123,12 @@
     const items = opts.items;
     const fs = opts.labelFontSize || 12.5;
     const barH = 16;
-    const W = 720, rowH = Math.max(30, barH + 12), H = items.length * rowH + 10;
+    const W = 720, rowH = Math.max(32, barH + 14), H = items.length * rowH + 16;
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const max = Math.max(...items.map((d) => d.value)) * 1.02;
-    const labelW = Math.max(140, fs * 10.5), barMax = W - labelW - 75;
+    const labelW = Math.max(170, fs * 11), barMax = W - labelW - 85;
     items.forEach((d, i) => {
-      const y = 12 + i * rowH, barY = y + (rowH - 20 - barH) / 2, mid = barY + barH / 2 + fs * 0.35;
+      const y = 8 + i * rowH, barY = y + (rowH - barH) / 2, mid = barY + barH / 2 + fs * 0.35;
       const lbl = el("text", { x: 0, y: mid, class: "axis-label", "font-size": fs });
       lbl.setAttribute("fill", "var(--text-soft)"); lbl.textContent = d.label;
       markEdit(lbl, d.editLabel);
