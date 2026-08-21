@@ -1008,11 +1008,16 @@ body.cat-quad .cat-filters { position: static; top: auto; }
 .filter-dd-actions button:hover { text-decoration: underline; }
 .filter-dd-list { overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 .filter-dd-item {
-  display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 7px;
-  font-size: .86rem; color: var(--text); cursor: pointer; transition: background .15s;
+  display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px;
+  font-size: .88rem; font-weight: 600; color: var(--text); cursor: pointer; transition: background .15s, color .15s;
+  user-select: none;
 }
-.filter-dd-item:hover { background: var(--surface-2); }
-.filter-dd-item input { accent-color: var(--accent); cursor: pointer; }
+.filter-dd-item:hover { background: var(--surface-2); color: var(--white); }
+.filter-dd-item input[type="checkbox"] {
+  width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; border-radius: 4px;
+  flex: none;
+}
+.filter-dd-item span { flex: 1; }
 
 /* Gemi/kabotaj sayfaları: tekli büyük kart yerine 4'lü KPI panosu — TEK bütün
    çerçeve, hücreler ince dikey çizgiyle ayrılır (bigstats ile aynı dil, yan

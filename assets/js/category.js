@@ -412,8 +412,50 @@
 
     // Yıl Dropdown Olayları
     const ddY = box.querySelector('.filter-dd[data-dd="years"]');
+    const ddM = box.querySelector('.filter-dd[data-dd="months"]');
+
+    function updateMonthList() {
+      if (!ddM) return;
+      const mAvail = curAvail();
+      const mBtn = ddM.querySelector(".filter-dd-btn span:first-child");
+      if (mBtn) mBtn.textContent = monthsLabel(mAvail);
+      const list = ddM.querySelector(".filter-dd-list");
+      if (list) {
+        list.innerHTML = mAvail.map((mo) => {
+          const checked = state.months.includes(mo);
+          return `<label class="filter-dd-item">
+            <input type="checkbox" value="${mo}" ${checked ? "checked" : ""}>
+            <span>${MON()[mo - 1]}</span>
+          </label>`;
+        }).join("");
+        wireMonthCheckboxes();
+      }
+    }
+
+    function wireMonthCheckboxes() {
+      if (!ddM) return;
+      const mBtn = ddM.querySelector(".filter-dd-btn span:first-child");
+      ddM.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+        cb.addEventListener("change", () => {
+          const val = +cb.value;
+          if (cb.checked) {
+            if (!state.months.includes(val)) state.months.push(val);
+          } else {
+            if (state.months.length > 1) {
+              state.months = state.months.filter((m) => m !== val);
+            } else {
+              cb.checked = true;
+            }
+          }
+          if (mBtn) mBtn.textContent = monthsLabel(curAvail());
+          renderDash();
+        });
+      });
+    }
+
     if (ddY) {
       const btn = ddY.querySelector(".filter-dd-btn");
+      const btnTxt = btn.querySelector("span:first-child");
       const panel = ddY.querySelector(".filter-dd-panel");
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -426,13 +468,19 @@
       panel.addEventListener("click", (e) => e.stopPropagation());
       ddY.querySelector(".btn-all")?.addEventListener("click", () => {
         state.years = [...years];
+        ddY.querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = true));
         state.months = curAvail();
-        renderFilters(); renderDash();
+        btnTxt.textContent = yearsSummary();
+        updateMonthList();
+        renderDash();
       });
       ddY.querySelector(".btn-clear")?.addEventListener("click", () => {
         state.years = [years[0]];
+        ddY.querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = (+c.value === years[0])));
         state.months = curAvail();
-        renderFilters(); renderDash();
+        btnTxt.textContent = yearsSummary();
+        updateMonthList();
+        renderDash();
       });
       ddY.querySelectorAll("input[type=checkbox]").forEach((cb) => {
         cb.addEventListener("change", () => {
@@ -447,15 +495,17 @@
             }
           }
           state.months = curAvail();
-          renderFilters(); renderDash();
+          btnTxt.textContent = yearsSummary();
+          updateMonthList();
+          renderDash();
         });
       });
     }
 
     // Ay Dropdown Olayları
-    const ddM = box.querySelector('.filter-dd[data-dd="months"]');
     if (ddM) {
       const btn = ddM.querySelector(".filter-dd-btn");
+      const btnTxt = btn.querySelector("span:first-child");
       const panel = ddM.querySelector(".filter-dd-panel");
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -468,27 +518,18 @@
       panel.addEventListener("click", (e) => e.stopPropagation());
       ddM.querySelector(".btn-all")?.addEventListener("click", () => {
         state.months = curAvail();
-        renderFilters(); renderDash();
+        ddM.querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = true));
+        btnTxt.textContent = monthsLabel(curAvail());
+        renderDash();
       });
       ddM.querySelector(".btn-clear")?.addEventListener("click", () => {
-        state.months = [avail[0]];
-        renderFilters(); renderDash();
+        const mAvail = curAvail();
+        state.months = [mAvail[0]];
+        ddM.querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = (+c.value === mAvail[0])));
+        btnTxt.textContent = monthsLabel(mAvail);
+        renderDash();
       });
-      ddM.querySelectorAll("input[type=checkbox]").forEach((cb) => {
-        cb.addEventListener("change", () => {
-          const val = +cb.value;
-          if (cb.checked) {
-            if (!state.months.includes(val)) state.months.push(val);
-          } else {
-            if (state.months.length > 1) {
-              state.months = state.months.filter((m) => m !== val);
-            } else {
-              cb.checked = true;
-            }
-          }
-          renderFilters(); renderDash();
-        });
-      });
+      wireMonthCheckboxes();
     }
 
     wireBtnGroup(box, "bogaz", "bogaz");
