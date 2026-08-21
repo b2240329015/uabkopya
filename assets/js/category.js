@@ -1069,10 +1069,23 @@
     return out;
   }
 
-  function start() {
+  async function start() {
+    try {
+      await Promise.all([window.MD_READY || Promise.resolve(), window.MD_I18N_READY || Promise.resolve()]);
+      const live = await loadDetailFromSupabase(cat);
+      if (live && (live.monthly?.length || live.ports?.length || live.breakdown?.length)) {
+        DET = live;
+        console.info(`[category] ${cat}: Supabase verisi yüklendi.`);
+      } else {
+        DET = window.DETAIL_DATA || { monthly: [], ports: [], breakdown: [] };
+      }
+    } catch (e) {
+      console.info(`[category] ${cat}: Yerel veri kullanılıyor:`, e.message);
+      DET = window.DETAIL_DATA || { monthly: [], ports: [], breakdown: [] };
+    }
+
     const MD = window.MARITIME_DATA || {};
     H = MD.headline || {}; P = MD.ports || []; T = MD.trend || {};
-    DET = window.DETAIL_DATA || { monthly: [], ports: [], breakdown: [] };
     m = (H && H[cfg.headKey]) || { deger: 0, yil: 2026 };
     accent = getComputedStyle(document.documentElement).getPropertyValue(cfg.accent).trim();
     document.title = t("cat." + cat) + " — " + t("site.title");
@@ -1102,20 +1115,11 @@
     renderDash();
     renderArchive();
     window.MDScan && window.MDScan();
-
-    // Arka planda Supabase'den canlı veri varsa çekip sessizce güncelle (sayfa açılışını asla bekletmez)
-    loadDetailFromSupabase(cat).then((live) => {
-      if (live && (live.monthly?.length || live.ports?.length || live.breakdown?.length)) {
-        DET = live;
-        renderFilters();
-        renderDash();
-        renderArchive();
-        console.info(`[category] ${cat}: Supabase verisi güncellendi.`);
-      }
-    }).catch(() => {
-      console.info(`[category] ${cat}: yerel veri devrede.`);
-    });
   }
 
-  start();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start);
+  } else {
+    start();
+  }
 })();

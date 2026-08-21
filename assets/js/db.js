@@ -42,22 +42,22 @@
     t.forEach((x) => { (trend[x.metric] = trend[x.metric] || {})[x.year] = +x.value; });
 
     // Harita geometrisi (viewBox/outline/searoute) DB'de değil — gömülü veriden gelir.
-    window.MARITIME_DATA = Object.assign({}, FALLBACK, { _source: "inline" });
+    window.MARITIME_DATA = Object.assign({}, FALLBACK, {
+      headline, ports, trend, _source: "supabase"
+    });
     return window.MARITIME_DATA;
   }
 
-  // Hemen kullanılabilir veri (anında render)
-  window.MARITIME_DATA = Object.assign({}, FALLBACK, { _source: "inline" });
-  window.MD_READY = Promise.resolve(window.MARITIME_DATA);
-
-  // Arka planda Supabase'den güncelleme
-  (async () => {
+  // Sayfa açılışında Supabase'den tam veri yüklemesini bekle
+  window.MD_READY = (async () => {
     try {
       const live = await fromSupabase();
-      window.MARITIME_DATA = live;
-      console.info("[db] Veri Supabase'den güncellendi.");
+      console.info("[db] Veri Supabase'den yüklendi.");
+      return live;
     } catch (e) {
-      console.info("[db] Gömülü veri kullanılıyor.");
+      console.info("[db] Supabase yüklenemedi, gömülü veri kullanılıyor:", e.message);
+      window.MARITIME_DATA = Object.assign({}, FALLBACK, { _source: "inline" });
+      return window.MARITIME_DATA;
     }
   })();
 })();
