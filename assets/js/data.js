@@ -2,55 +2,57 @@ window.MARITIME_DATA = {
   "meta": {
     "kaynak": "T.C. Ulaştırma ve Altyapı Bakanlığı – Denizcilik Genel Müdürlüğü",
     "kaynak_url": "https://denizcilikistatistikleri.uab.gov.tr/",
-    "guncelleme": "2024 yıl sonu (bazı seriler 2025)",
+    "guncelleme": "2025 yıl sonu (2026 verisi henüz yıl içi — yıllık KPI'lar 2025)",
     "not": "Veriler resmi denizcilik istatistiklerinden derlenmiştir."
   },
   "headline": {
     "yuk_ton": {
-      "deger": 531737358,
-      "yil": 2024,
-      "onceki": 521079804,
-      "yoy": 2.0
+      "deger": 553265898,
+      "yil": 2025,
+      "onceki": 531737358,
+      "yoy": 4.0
     },
     "konteyner_teu": {
-      "deger": 13529729,
-      "yil": 2024,
-      "onceki": 12556401,
-      "yoy": 7.8
+      "deger": 13996578,
+      "yil": 2025,
+      "onceki": 13529729,
+      "yoy": 3.5
     },
     "gemi_sayisi": {
-      "deger": 60594,
-      "yil": 2024,
-      "onceki": 60195,
-      "yoy": 0.7
+      "deger": 62656,
+      "yil": 2025,
+      "onceki": 60594,
+      "yoy": 3.4
     },
     "kruvaziyer_yolcu": {
-      "deger": 1889426,
-      "yil": 2024,
-      "onceki": 1542522,
-      "yoy": 22.5
+      "deger": 2138136,
+      "yil": 2025,
+      "onceki": 1889426,
+      "yoy": 13.2
     },
     "roro_arac": {
-      "deger": 2722081,
-      "yil": 2024,
-      "onceki": 2761362,
-      "yoy": -1.4
+      "deger": 2967284,
+      "yil": 2025,
+      "onceki": 2722081,
+      "yoy": 9.0
     },
     "bogaz_gecis": {
-      "deger": 41363,
-      "yil": 2024,
-      "onceki": 39000,
-      "yoy": 6.1
+      "deger": 40172,
+      "yil": 2025,
+      "onceki": 41363,
+      "yoy": -2.9
     },
     "kabotaj_yolcu": {
-      "deger": 117832340,
-      "yil": 2024,
-      "onceki": 119512485,
-      "yoy": -1.4
+      "deger": 118891577,
+      "yil": 2025,
+      "onceki": 117832340,
+      "yoy": 0.9
     },
     "filo_gemi": {
-      "deger": 414,
-      "yil": 2023,
+      "deger": 398,
+      "yil": 2025,
+      "onceki": 405,
+      "yoy": -1.7,
       "not": "1.000 GT ve üzeri Türk deniz ticaret filosu"
     }
   },
@@ -61,13 +63,15 @@ window.MARITIME_DATA = {
       "2020": 496642652,
       "2022": 542610283,
       "2023": 521079804,
-      "2024": 531737358
+      "2024": 531737358,
+      "2025": 553265898
     },
     "konteyner_teu": {
       "2020": 11626650,
       "2022": 12366382,
       "2023": 12556401,
-      "2024": 13529729
+      "2024": 13529729,
+      "2025": 13996578
     },
     "kruvaziyer_yolcu": {
       "2015": 1888522,
@@ -75,7 +79,8 @@ window.MARITIME_DATA = {
       "2020": 1824,
       "2022": 1010767,
       "2023": 1542522,
-      "2024": 1889426
+      "2024": 1889426,
+      "2025": 2138136
     },
     "kabotaj_yolcu": {
       "2025": 118891577,
@@ -133,12 +138,14 @@ window.MARITIME_DATA = {
       "2020": 790881650,
       "2022": 873329628,
       "2023": 894059943,
-      "2024": 902445227
+      "2024": 902445227,
+      "2025": 966509361
     },
     "roro_arac_yil": {
       "2022": 2330406,
       "2023": 2761362,
-      "2024": 2722081
+      "2024": 2722081,
+      "2025": 2967284
     },
     "kabotaj_arac_mil": {
       "2025": 60616990.08,
