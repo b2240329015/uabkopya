@@ -573,37 +573,20 @@ body::after {
 .cat-card:hover .go svg { transform: translateX(4px); }
 
 /* ============================================================
-   Sayfa başlığı (iç sayfalar) — Başlık + Yan yana KPI panosu
+   Sayfa başlığı (iç sayfalar)
    ============================================================ */
-.page-hero { padding: 16px 0 8px; position: relative; }
-.hero-cockpit {
-  display: flex; align-items: stretch; justify-content: space-between; gap: 20px;
-}
-.hero-title-box {
-  flex: 0 0 270px; display: flex; flex-direction: column; justify-content: center;
-}
-.hero-title-box .breadcrumb { display: flex; gap: 6px; align-items: center; font-size: 0.78rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; }
-.hero-title-box .breadcrumb svg { width: 12px; height: 12px; flex: none; opacity: 0.7; }
-.hero-title-box .breadcrumb a:hover { color: var(--sky-200); }
-.hero-title-box .page-title { display: flex; align-items: center; gap: 10px; }
-.hero-title-box .page-icon {
+.page-hero { padding: 18px 0 10px; position: relative; }
+.page-hero .breadcrumb { display: flex; gap: 6px; align-items: center; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; }
+.page-hero .breadcrumb svg { width: 12px; height: 12px; flex: none; opacity: 0.7; }
+.page-hero .breadcrumb a:hover { color: var(--sky-200); }
+.page-title { display: flex; align-items: center; gap: 10px; }
+.page-icon {
   width: 38px; height: 38px; flex: none; border-radius: 10px;
   display: grid; place-items: center;
   background: var(--surface-2); border: 1px solid var(--border);
 }
-.hero-title-box .page-icon svg { width: 20px; height: 20px; }
-.hero-title-box h1 { font-size: clamp(1.35rem, 1.9vw, 1.8rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
-
-.hero-kpi-box {
-  flex: 1 1 auto; min-width: 0; display: flex; align-items: stretch;
-}
-.hero-kpi-box .dash-quad, .hero-kpi-box .dash-stat {
-  width: 100%;
-}
-@media (max-width: 1060px) {
-  .hero-cockpit { flex-direction: column; gap: 12px; }
-  .hero-title-box { flex: none; }
-}
+.page-icon svg { width: 20px; height: 20px; }
+.page-hero h1 { font-size: clamp(1.4rem, 2vw, 1.85rem); font-weight: 800; letter-spacing: -0.02em; }
 
 /* Arşiv / dosya tablosu */
 .data-table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: var(--radius); }

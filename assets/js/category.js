@@ -294,15 +294,10 @@
   function skeleton() {
     host.innerHTML = `
     <section class="page-hero"><div class="wrap">
-      <div class="hero-cockpit">
-        <div class="hero-title-box">
-          <div class="breadcrumb"><a href="./" data-i18n="nav.home">${t("nav.home")}</a> ${arrow("right")} <span data-i18n="cat.${cat}">${t("cat." + cat)}</span></div>
-          <div class="page-title">
-            <span class="page-icon" style="color:${accent}">${icon(cfg.ic)}</span>
-            <h1 data-i18n="cat.${cat}">${t("cat." + cat)}</h1>
-          </div>
-        </div>
-        <div class="hero-kpi-box" id="catKpi"></div>
+      <div class="breadcrumb"><a href="./" data-i18n="nav.home">${t("nav.home")}</a> ${arrow("right")} <span data-i18n="cat.${cat}">${t("cat." + cat)}</span></div>
+      <div class="page-title">
+        <span class="page-icon" style="color:${accent}">${icon(cfg.ic)}</span>
+        <h1 data-i18n="cat.${cat}">${t("cat." + cat)}</h1>
       </div>
     </div></section>
     <section class="cat-wrap"><div class="wrap">
@@ -315,78 +310,12 @@
   }
 
   /* ---------- Filtreler ---------- */
-  function renderFilters() {
-    const box = document.getElementById("catFilters");
-    if (!box) return;
-    if (cfg.yearsOnly) return renderFiltersYearsOnly(box);
-    return renderFiltersQuad(box);
-  }
+  const FILTER_OPTS = {
+    seri: [["toplam", "ui.total"], ["yukleme", "series.yukleme"], ["bosaltma", "series.bosaltma"]],
+    bayrak: [["toplam", "ui.all"], ["turk", "series.turk"], ["yabanci", "series.yabanci"]],
+    tip: [["tumu", "ui.all"], ["dolu", "konteyner.dolu"], ["bos", "konteyner.bos"]],
+  };
 
-
-
-  /* ---------- Filtreler: çoklu seçim (gemi) ---------- */
-  function ddBlock(key, labelKey, summary, items, selected, itemI18nKeys) {
-    const open = ddOpen[key];
-    return `<div class="filter-group"><label data-i18n="${labelKey}">${t(labelKey)}</label>
-      <div class="filter-dd" data-dd="${key}">
-        <button type="button" class="filter-dd-btn" data-dd-toggle="${key}"><span>${summary}</span><span class="dd-chev">▾</span></button>
-        <div class="filter-dd-panel" ${open ? "" : "hidden"}>
-          <div class="filter-dd-actions">
-            <button type="button" data-dd-all="${key}" data-i18n="ui.all">${t("ui.all")}</button>
-            <button type="button" data-dd-none="${key}" data-i18n="ui.clear">${t("ui.clear")}</button>
-          </div>
-          <div class="filter-dd-list">
-            ${items.map(([v, label], i) => `<label class="filter-dd-item"><input type="checkbox" data-dd-item="${key}" value="${v}" ${selected.includes(v) ? "checked" : ""}><span${itemI18nKeys ? ` data-i18n="${itemI18nKeys[i]}"` : ""}>${label}</span></label>`).join("")}
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  function wireDDToggles(box) {
-    box.querySelectorAll("[data-dd-toggle]").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const key = btn.dataset.ddToggle;
-        const willOpen = !ddOpen[key];
-        closeAllDD();
-        if (willOpen) {
-          ddOpen[key] = true;
-          const panel = btn.parentElement.querySelector(".filter-dd-panel");
-          if (panel) panel.hidden = false;
-        }
-      });
-    });
-  }
-
-  function wireYearsDD(box) {
-    const onChange = (list) => {
-      state.years = list.length ? list.sort((a, b) => b - a) : [years[0]];
-      const av = curAvail();
-      state.months = state.months.filter((mo) => av.includes(mo));
-      if (!state.months.length) state.months = av;
-      renderFilters(); renderDash();
-    };
-    box.querySelectorAll("[data-dd-item='years']").forEach((cb) => cb.addEventListener("change", () =>
-      onChange([...box.querySelectorAll("[data-dd-item='years']:checked")].map((x) => +x.value))));
-    const allBtn = box.querySelector("[data-dd-all='years']"), noneBtn = box.querySelector("[data-dd-none='years']");
-    if (allBtn) allBtn.addEventListener("click", () => onChange([...years]));
-    if (noneBtn) noneBtn.addEventListener("click", () => onChange([years[0]]));
-  }
-
-  function wireMonthsDD(box, avail) {
-    const onChange = (list) => {
-      state.months = list.length ? list.sort((a, b) => a - b) : [avail[0]];
-      renderFilters(); renderDash();
-    };
-    box.querySelectorAll("[data-dd-item='months']").forEach((cb) => cb.addEventListener("change", () =>
-      onChange([...box.querySelectorAll("[data-dd-item='months']:checked")].map((x) => +x.value))));
-    const allBtn = box.querySelector("[data-dd-all='months']"), noneBtn = box.querySelector("[data-dd-none='months']");
-    if (allBtn) allBtn.addEventListener("click", () => onChange([...avail]));
-    if (noneBtn) noneBtn.addEventListener("click", () => onChange([avail[0]]));
-  }
-
-  /* Tek seçimli düğme grubu (seri / bayrak / tip / bölge) */
   function btnGroup(name, labelKey, opts, cur) {
     return `<div class="filter-group"><label data-i18n="${labelKey}">${t(labelKey)}</label>
       <div class="filter-regions">${opts.map(([v, k]) =>
@@ -399,55 +328,71 @@
     }));
   }
 
-  const FILTER_OPTS = {
-    seri: [["toplam", "ui.total"], ["yukleme", "series.yukleme"], ["bosaltma", "series.bosaltma"]],
-    bayrak: [["toplam", "ui.all"], ["turk", "series.turk"], ["yabanci", "series.yabanci"]],
-    tip: [["tumu", "ui.all"], ["dolu", "konteyner.dolu"], ["bos", "konteyner.bos"]],
-  };
-
-  function renderFiltersQuad(box) {
+  function renderFilters() {
+    const box = document.getElementById("catFilters");
+    if (!box) return;
     const avail = curAvail();
-    const want = cfg.filters || ["years", "months"];
+    const want = cfg.filters || (cfg.yearsOnly ? ["years"] : ["years", "months"]);
     let h = `<div class="filter-head">${icon(cfg.ic)} <span data-i18n="ui.filter">${t("ui.filter")}</span></div>`;
 
-    h += ddBlock("years", "ui.year", yearsSummary(), years.map((y) => [y, String(y)]), state.years);
+    // Sade ve net yıl seçimi: 2026'ya basınca diğer yıllar açılır
+    h += `<div class="filter-group">
+      <label for="fYear" data-i18n="ui.year">${t("ui.year")}</label>
+      <select class="filter-select" id="fYear">
+        ${years.map((y) => `<option value="${y}"${y === state.years[0] ? " selected" : ""}>${y}</option>`).join("")}
+      </select>
+    </div>`;
+
+    // Ay seçimi (aylık verisi olan sayfalar)
     if (want.includes("months") && avail.length) {
-      h += ddBlock("months", "ui.month", monthsLabel(avail), avail.map((mo) => [mo, MON()[mo - 1]]),
-        state.months, avail.map((mo) => `month.${mo}`));
+      const isAll = state.months.length === avail.length;
+      h += `<div class="filter-group">
+        <label for="fMonth" data-i18n="ui.month">${t("ui.month")}</label>
+        <select class="filter-select" id="fMonth">
+          <option value="all"${isAll ? " selected" : ""}>${t("ui.all")} (${avail.length} Ay)</option>
+          ${avail.map((mo) => `<option value="${mo}"${!isAll && state.months.length === 1 && state.months[0] === mo ? " selected" : ""}>${MON()[mo - 1]}</option>`).join("")}
+        </select>
+      </div>`;
     }
-    if (want.includes("seri")) h += btnGroup("seri", "ui.series", FILTER_OPTS.seri, state.seri);
+
+    if (want.includes("seri") && cfg.series && cfg.series.length) h += btnGroup("seri", "ui.series", FILTER_OPTS.seri, state.seri);
     if (want.includes("bayrak")) h += btnGroup("bayrak", "ui.flag", FILTER_OPTS.bayrak, state.bayrak);
     if (want.includes("tip")) h += btnGroup("tip", "ui.contType", FILTER_OPTS.tip, state.tip);
     if (want.includes("region") && pRows().length) {
-      h += btnGroup("region", "ui.region",
-        [["all", "ui.all"]].concat(SEAS.map(([v, k]) => [v, k])), state.region);
+      h += btnGroup("region", "ui.region", [["all", "ui.all"]].concat(SEAS.map(([v, k]) => [v, k])), state.region);
     }
 
     h += `<a class="btn btn-ghost filter-src" href="dosyalar?kat=${cfg.arch}"><span data-i18n="ui.viewFiles">${t("ui.viewFiles")}</span> ${arrow("right")}</a>`;
     box.innerHTML = h;
 
-    wireDDToggles(box);
-    wireYearsDD(box);
-    if (want.includes("months")) wireMonthsDD(box, avail);
+    const selYear = box.querySelector("#fYear");
+    if (selYear) {
+      selYear.addEventListener("change", (e) => {
+        state.years = [+e.target.value];
+        state.months = curAvail();
+        renderFilters(); renderDash();
+      });
+    }
+
+    const selMonth = box.querySelector("#fMonth");
+    if (selMonth) {
+      selMonth.addEventListener("change", (e) => {
+        if (e.target.value === "all") state.months = curAvail();
+        else state.months = [+e.target.value];
+        renderFilters(); renderDash();
+      });
+    }
+
     wireBtnGroup(box, "seri", "seri");
     wireBtnGroup(box, "bayrak", "bayrak");
     wireBtnGroup(box, "tip", "tip");
     wireBtnGroup(box, "region", "region");
   }
 
-  /* Yalnız yıl filtresi — kabotaj (ay/liman kırılımı hiç yok kaynakta). */
-  function renderFiltersYearsOnly(box) {
-    let h = `<div class="filter-head">${icon(cfg.ic)} <span data-i18n="ui.filter">${t("ui.filter")}</span></div>`;
-    h += ddBlock("years", "ui.year", yearsSummary(), years.map((y) => [y, String(y)]), state.years);
-    h += `<a class="btn btn-ghost filter-src" href="dosyalar?kat=${cfg.arch}"><span data-i18n="ui.viewFiles">${t("ui.viewFiles")}</span> ${arrow("right")}</a>`;
-    box.innerHTML = h;
-    wireDDToggles(box);
-    wireYearsDD(box);
-  }
-
   /* ---------- Dashboard ---------- */
   function renderDash() {
     const box = document.getElementById("catDash");
+    if (!box) return;
     if (cfg.quad) return renderDashQuad(box);
     if (cfg.yearsOnly) return renderDashYearsOnly(box);
 
@@ -482,7 +427,7 @@
     const head = `<div class="dash-stat" style="--kc:${accent}">
       <div class="ds-top"><span class="ds-ic">${icon(cfg.ic)}</span>
         <span class="ds-label"${seriKey ? ` data-i18n="${seriKey}"` : ""}>${seriName}</span>${delta || `<span class="kpi-year">${y0}</span>`}</div>
-      <div class="ds-num" data-derived="Bu toplam, seçili ayların veritabanındaki değerlerinden hesaplanıyor. Değiştirmek için aşağıdaki “aylara göre dağılım” grafiğinde ilgili sütuna tıkla.">${hv.v} <span class="ds-unit">${magSpan}<span data-i18n="${cfg.unit}">${unit}</span></span></div>
+      <div class="ds-num" data-derived="Bu toplam, seçili ayların veritabanındaki değerlerinden hesaplanıyor.">${hv.v} <span class="ds-unit">${magSpan}<span data-i18n="${cfg.unit}">${unit}</span></span></div>
       <div class="ds-sub">${sub}${partial ? " · " + t("ui.partial") : ""}</div>
     </div>`;
 
@@ -496,15 +441,12 @@
     if (cfg.donut && bRows().some((r) => r.boyut === cfg.donut.dim)) cards += dashCard("dDonut", t(cfg.donut.key), unit, cfg.donut.key);
     if (cfg.barsDim && bRows().some((r) => r.boyut === cfg.barsDim.dim)) cards += dashCard("dBars", t(cfg.barsDim.key), unit, cfg.barsDim.key);
 
-    const kpiBox = document.getElementById("catKpi");
-    const dashBox = document.getElementById("catDash");
-    if (kpiBox) kpiBox.innerHTML = head;
-    if (dashBox) dashBox.innerHTML = `<div class="dash-cards">${cards}</div>`;
+    box.innerHTML = head + `<div class="dash-cards">${cards}</div>`;
     setTimeout(draw, 40);
   }
 
   /* ---------- Dashboard: bildirimli KPI panosu (cfg.cards/cfg.charts — gemi, yük, …) ---------- */
-  function renderDashQuad() {
+  function renderDashQuad(box) {
     const avail = curAvail(), unit = t(cfg.unit);
     const partial = avail.length && state.months.length < avail.length;
     const ysum = yearsSummary();
@@ -534,27 +476,21 @@
       return dashCard(ch.id, t(ch.titleKey), s2, ch.titleKey, isWide);
     }).join("");
 
-    const kpiBox = document.getElementById("catKpi");
-    const dashBox = document.getElementById("catDash");
-    if (kpiBox) kpiBox.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.cards.length}">${cardsHtml}</div>`;
-    if (dashBox) dashBox.innerHTML = `<div class="dash-cards">${chartsHtml}</div>`;
+    box.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.cards.length}">${cardsHtml}</div><div class="dash-cards">${chartsHtml}</div>`;
     setTimeout(draw, 40);
   }
 
   /* ---------- Dashboard: yalnız yıl (kabotaj, filo) ---------- */
-  // Yıllık metrik toplama biçimi: akış değişkenleri (kabotaj: taşınan yolcu/araç) yıllar
-  // boyunca toplanır; stok değişkenleri (filo: gemi adedi/DWT — o yılın sonundaki filo)
-  // toplanamaz, en güncel seçili yıl gösterilir; ortalama yaş ise yılların ortalaması.
   const YO_AGG = {
     sum: { calc: (vals) => vals.reduce((s, v) => s + v, 0), subKey: "ui.yearlyTotal",
-           note: "Bu toplam, seçili yıl(lar)ın veritabanındaki değerlerinden hesaplanıyor. Değiştirmek için aşağıdaki ilgili grafikte o yıla tıkla." },
+           note: "Bu toplam, seçili yıl(lar)ın veritabanındaki değerlerinden hesaplanıyor." },
     avg: { calc: (vals) => vals.reduce((s, v) => s + v, 0) / vals.length, subKey: "ui.yearlyAvg",
-           note: "Bu değer, seçili yılların veritabanındaki değerlerinin ortalamasıdır. Değiştirmek için aşağıdaki ilgili grafikte o yıla tıkla." },
+           note: "Bu değer, seçili yılların veritabanındaki değerlerinin ortalamasıdır." },
     last: { calc: (vals, yrs) => vals[yrs.indexOf(Math.max(...yrs))], subKey: "ui.latestYear",
-            note: "Bu bir stok değeridir (yılsonu filosu), yıllar toplanamaz — seçili en güncel yılın veritabanındaki değeri gösteriliyor. Değiştirmek için aşağıdaki ilgili grafikte o yıla tıkla." },
+            note: "Bu bir stok değeridir (yılsonu filosu), seçili en güncel yılın veritabanındaki değeri gösteriliyor." },
   };
 
-  function renderDashYearsOnly() {
+  function renderDashYearsOnly(box) {
     const ysum = yearsSummary();
 
     const cardsHtml = cfg.metrics.map((mt) => {
@@ -581,15 +517,11 @@
 
     let cards = cfg.metrics.map((mt) => dashCard(mt.key, t(mt.labelKey), ysum, mt.labelKey)).join("");
     if (cfg.barsDim && bRows().some((r) => r.boyut === cfg.barsDim.dim)) {
-      // Stok veri (yılsonu envanteri) — yalnız en güncel seçili yılı gösterir, altyazı bunu netleştirir.
       const latestY = Math.max(...state.years);
       cards += dashCard("dBars", t(cfg.barsDim.key), `${latestY} · ${t(cfg.unit)}`, cfg.barsDim.key);
     }
 
-    const kpiBox = document.getElementById("catKpi");
-    const dashBox = document.getElementById("catDash");
-    if (kpiBox) kpiBox.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.metrics.length}">${cardsHtml}</div>`;
-    if (dashBox) dashBox.innerHTML = `<div class="dash-cards">${cards}</div>`;
+    box.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.metrics.length}">${cardsHtml}</div><div class="dash-cards">${cards}</div>`;
     setTimeout(draw, 40);
   }
 
