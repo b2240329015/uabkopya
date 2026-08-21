@@ -161,8 +161,8 @@
   /* ---------- Donut ---------- */
   function donut(host, opts) {
     host.innerHTML = "";
-    const W = 240, R = 95, r = 58, cx = W / 2, cy = W / 2;
-    const svg = el("svg", { viewBox: `0 0 ${W} ${W}`, preserveAspectRatio: "xMidYMid meet" });
+    const W = 220, R = 85, r = 52, cx = W / 2, cy = W / 2;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${W}`, preserveAspectRatio: "xMidYMid meet", style: "max-height:210px;max-width:210px;margin:0 auto;display:block;" });
     const total = opts.items.reduce((s, d) => s + d.value, 0);
     let ang = -Math.PI / 2;
     opts.items.forEach((d, i) => {
@@ -188,10 +188,10 @@
       svg.appendChild(path);
       ang = a2;
     });
-    const cLabel = el("text", { x: cx, y: cy - 3, "text-anchor": "middle", "font-family": "var(--font-display)", "font-weight": 800, "font-size": 22, fill: "var(--white)" });
+    const cLabel = el("text", { x: cx, y: cy - 3, "text-anchor": "middle", "font-family": "var(--font-display)", "font-weight": 800, "font-size": 20, fill: "var(--white)" });
     const hv = window.MDUtil.human(total); cLabel.textContent = hv.v;
     svg.appendChild(cLabel);
-    const cSub = el("text", { x: cx, y: cy + 18, "text-anchor": "middle", "font-size": 12, fill: "var(--text-dim)" });
+    const cSub = el("text", { x: cx, y: cy + 17, "text-anchor": "middle", "font-size": 11.5, fill: "var(--text-dim)" });
     cSub.textContent = (hv.u ? hv.u + " " : "") + (opts.unit || ""); svg.appendChild(cSub);
     host.appendChild(svg);
   }
