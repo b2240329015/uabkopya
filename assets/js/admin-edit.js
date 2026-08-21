@@ -125,7 +125,6 @@
     ["roro", "roro", "RO-RO Araç"],
     ["gemi", "gemi", "Gemi"],
     ["filo", "filo", "Filo"],
-    ["harita", "harita", "Harita"],
     ["dosyalar", "dosyalar", "Dosyalar"],
     ["iletisim", "iletisim", "İletişim"],
   ];

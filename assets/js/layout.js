@@ -104,7 +104,7 @@
           <a href="index.html" data-i18n="nav.home">${t("nav.home")}</a>
           <a href="${t("url.dgm")}" target="_blank" rel="noopener" data-i18n="footer.dgm" data-i18n-href="url.dgm">${t("footer.dgm")}</a>
           <a href="dosyalar.html" data-i18n="nav.dosyalar">${t("nav.dosyalar")}</a>
-          <a href="harita.html" data-i18n="nav.map">${t("nav.map")}</a>
+          <a href="https://limanlargis.uab.gov.tr/" target="_blank" rel="noopener" data-i18n="nav.map">${t("nav.map")}</a>
           <a href="diger-istatistikler.html" data-i18n="nav.other">${t("nav.other")}</a>
           <a href="iletisim.html" data-i18n="nav.contact">${t("nav.contact")}</a>
           <a href="site-haritasi.html" data-i18n="nav.sitemap">${t("nav.sitemap")}</a>
