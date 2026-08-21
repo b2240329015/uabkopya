@@ -56,7 +56,7 @@
   /* ---------- Line / Area ---------- */
   function lineArea(host, opts) {
     host.innerHTML = "";
-    const W = 720, H = 320, pad = { t: 24, r: 24, b: 40, l: 64 };
+    const W = 720, H = 260, pad = { t: 18, r: 16, b: 32, l: 56 };
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const xs = opts.labels;
     const allVals = opts.series.flatMap((s) => s.values);
@@ -121,12 +121,12 @@
   function bars(host, opts) {
     host.innerHTML = "";
     const items = opts.items;
-    const fs = opts.labelFontSize || 15; // isteğe bağlı — bazı sayfalarda büyütülüyor
-    const barH = Math.max(24, fs * 1.7);
-    const W = 720, rowH = Math.max(48, barH + 24), H = items.length * rowH + 20;
+    const fs = opts.labelFontSize || 13;
+    const barH = 20;
+    const W = 720, rowH = Math.max(36, barH + 16), H = items.length * rowH + 14;
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const max = Math.max(...items.map((d) => d.value)) * 1.02;
-    const labelW = Math.max(165, fs * 11.5), barMax = W - labelW - 90;
+    const labelW = Math.max(150, fs * 11), barMax = W - labelW - 80;
     items.forEach((d, i) => {
       const y = 12 + i * rowH, barY = y + (rowH - 20 - barH) / 2, mid = barY + barH / 2 + fs * 0.35;
       const lbl = el("text", { x: 0, y: mid, class: "axis-label", "font-size": fs });
@@ -161,7 +161,7 @@
   /* ---------- Donut ---------- */
   function donut(host, opts) {
     host.innerHTML = "";
-    const W = 340, R = 130, r = 78, cx = W / 2, cy = W / 2;
+    const W = 280, R = 110, r = 68, cx = W / 2, cy = W / 2;
     const svg = el("svg", { viewBox: `0 0 ${W} ${W}`, preserveAspectRatio: "xMidYMid meet" });
     const total = opts.items.reduce((s, d) => s + d.value, 0);
     let ang = -Math.PI / 2;
@@ -224,7 +224,7 @@
   function columns(host, opts) {
     host.innerHTML = "";
     const labels = opts.labels, series = opts.series, stacked = !!opts.stacked;
-    const W = 760, H = 300, pad = { t: 18, r: 16, b: 42, l: 62 };
+    const W = 760, H = 250, pad = { t: 16, r: 14, b: 34, l: 54 };
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
     const totals = labels.map((_, i) =>
@@ -336,7 +336,7 @@
     host.innerHTML = "";
     const items = (opts.items || []).filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
     if (!items.length) { host.innerHTML = '<p class="csub">—</p>'; return; }
-    const W = 720, H = 380;
+    const W = 720, H = 280;
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const rects = squarify(items, 0, 0, W, H);
     rects.forEach((r) => {
