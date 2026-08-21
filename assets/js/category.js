@@ -65,7 +65,6 @@
       ],
       charts: [
         { id: "dRegime", type: "regime", titleKey: "konteyner.chartRegime" },
-        { id: "dCins", type: "cins", titleKey: "konteyner.chartCins" },
         { id: "dTrend", type: "singleSeries", titleKey: "cat.trendTitle" },
         { id: "dPorts", type: "ports", titleKey: "cat.portsTitle" },
         { id: "dCountries", type: "countries", titleKey: "dim.konteyner.bars" },
@@ -288,8 +287,8 @@
     return state.months.length + "/" + avail.length + " " + t("ui.monthSelected");
   }
 
-  const dashCard = (id, title, s2, key) =>
-    `<div class="dash-card"><h3${key ? ` data-i18n="${key}"` : ""}>${title}</h3>${s2 ? `<p class="csub">${s2}</p>` : ""}<div class="chart-holder" id="${id}"></div></div>`;
+  const dashCard = (id, title, s2, key, wide) =>
+    `<div class="dash-card${wide ? " wide" : ""}"><h3${key ? ` data-i18n="${key}"` : ""}>${title}</h3>${s2 ? `<p class="csub">${s2}</p>` : ""}<div class="chart-holder" id="${id}"></div></div>`;
 
   /* ---------- İskelet ---------- */
   function skeleton() {
@@ -537,7 +536,7 @@
     </div>`;
 
     let cards = "";
-    if (avail.length) cards += dashCard("dMonth", t("cat.monthTitle"), `${y0} · ${unit}`, "cat.monthTitle");
+    if (avail.length) cards += dashCard("dMonth", t("cat.monthTitle"), `${y0} · ${unit}`, "cat.monthTitle", true);
     if (catTrend()) cards += dashCard("dTrend", t("cat.trendTitle"), unit, "cat.trendTitle");
     if (cfg.dual) cards += dashCard("dDual", t("cat.trendTitle"), "", "cat.trendTitle");
     if (pRows().length) cards += dashCard("dPorts", t("cat.portsTitle") + (state.region !== "all" ? " — " + t(seaKeyOf(state.region)) : ""), `${y0} · ${unit}`);
@@ -572,12 +571,13 @@
     const capped = state.years.length > 10;
     const capNote = capped ? (lang() === "en" ? " · showing most recent 10 years" : " · en güncel 10 yıl gösteriliyor") : "";
 
-    const chartsHtml = cfg.charts.map((ch) => {
+    const chartsHtml = cfg.charts.map((ch, idx) => {
       let s2;
       if (ch.type === "monthly") s2 = `${ysum} · ${unit}${capNote}`;
       else if (ch.type === "singleSeries") s2 = `${subCounts}${capNote}`;
       else s2 = `${ysum} · ${t(ch.unitKey || cfg.unit)}`;
-      return dashCard(ch.id, t(ch.titleKey), s2, ch.titleKey);
+      const isWide = ch.wide || (ch.type === "monthly") || (ch.type === "tankerLine") || (cfg.charts.length % 2 === 1 && idx === 0);
+      return dashCard(ch.id, t(ch.titleKey), s2, ch.titleKey, isWide);
     }).join("");
 
     box.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.cards.length}">${cardsHtml}</div><div class="dash-cards">${chartsHtml}</div>`;

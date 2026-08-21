@@ -121,12 +121,12 @@
   function bars(host, opts) {
     host.innerHTML = "";
     const items = opts.items;
-    const fs = opts.labelFontSize || 13; // isteğe bağlı — bazı sayfalarda büyütülüyor
-    const barH = Math.max(22, fs * 1.7);
-    const W = 720, rowH = Math.max(46, barH + 24), H = items.length * rowH + 20;
+    const fs = opts.labelFontSize || 15; // isteğe bağlı — bazı sayfalarda büyütülüyor
+    const barH = Math.max(24, fs * 1.7);
+    const W = 720, rowH = Math.max(48, barH + 24), H = items.length * rowH + 20;
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const max = Math.max(...items.map((d) => d.value)) * 1.02;
-    const labelW = Math.max(150, fs * 11.5), barMax = W - labelW - 90;
+    const labelW = Math.max(165, fs * 11.5), barMax = W - labelW - 90;
     items.forEach((d, i) => {
       const y = 12 + i * rowH, barY = y + (rowH - 20 - barH) / 2, mid = barY + barH / 2 + fs * 0.35;
       const lbl = el("text", { x: 0, y: mid, class: "axis-label", "font-size": fs });
@@ -191,7 +191,7 @@
     const cLabel = el("text", { x: cx, y: cy - 4, "text-anchor": "middle", "font-family": "var(--font-display)", "font-weight": 800, "font-size": 26, fill: "var(--white)" });
     const hv = window.MDUtil.human(total); cLabel.textContent = hv.v;
     svg.appendChild(cLabel);
-    const cSub = el("text", { x: cx, y: cy + 20, "text-anchor": "middle", "font-size": 12, fill: "var(--text-dim)" });
+    const cSub = el("text", { x: cx, y: cy + 22, "text-anchor": "middle", "font-size": 14, fill: "var(--text-dim)" });
     cSub.textContent = (hv.u ? hv.u + " " : "") + (opts.unit || ""); svg.appendChild(cSub);
     host.appendChild(svg);
   }
@@ -245,7 +245,7 @@
     }
     labels.forEach((lb, i) => {
       const cx = pad.l + bw * i + bw / 2;
-      const tx = el("text", { x: cx, y: H - 14, class: "axis-label", "text-anchor": "middle", "font-size": 11 });
+      const tx = el("text", { x: cx, y: H - 14, class: "axis-label", "text-anchor": "middle", "font-size": 13 });
       tx.textContent = lb; svg.appendChild(tx);
       // MIN_H: az/küçük değerli sütunlar tek piksele düşünce fare ile hedeflenemiyordu —
       // görünür yüksekliği en az birkaç piksele sabitleyip hover'ı garantiliyoruz.
@@ -349,12 +349,12 @@
       if (rw0 > 44 && rh0 > 24) {
         const maxChars = Math.max(3, Math.floor(rw0 / 6.6));
         const short = r.label.length > maxChars ? r.label.slice(0, maxChars - 1) + "…" : r.label;
-        const txt = el("text", { x: rx0 + 8, y: ry0 + 18, "font-size": 12.5, "font-weight": 700, fill: "#fff" });
+        const txt = el("text", { x: rx0 + 8, y: ry0 + 18, "font-size": 14, "font-weight": 700, fill: "#fff" });
         txt.style.pointerEvents = "none"; txt.textContent = short;
         svg.appendChild(txt);
         if (rh0 > 40) {
           const hv = window.MDUtil.human(r.value);
-          const sub = el("text", { x: rx0 + 8, y: ry0 + 34, "font-size": 11, fill: "rgba(255,255,255,.88)" });
+          const sub = el("text", { x: rx0 + 8, y: ry0 + 36, "font-size": 12.5, fill: "rgba(255,255,255,.88)" });
           sub.style.pointerEvents = "none"; sub.textContent = hv.v + (hv.u ? " " + hv.u : "");
           svg.appendChild(sub);
         }
