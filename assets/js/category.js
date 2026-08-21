@@ -21,17 +21,6 @@
                 ["Akdeniz", "sea.akdeniz"], ["Karadeniz", "sea.karadeniz"]];
   const seaKeyOf = (v) => (SEAS.find((s) => s[0] === v) || [null, v])[1];
 
-  /* Çoklu seçim açılır listesi (yıl/ay) — yalnız cfg.quad sayfalarda (gemi) kullanılır.
-     Açık/kapalı durumu yeniden çizimler arasında kalıcı olsun diye modül seviyesinde. */
-  let ddOpen = { years: false, months: false };
-  function closeAllDD() {
-    ddOpen.years = false; ddOpen.months = false;
-    document.querySelectorAll(".filter-dd-panel").forEach((p) => (p.hidden = true));
-  }
-  document.addEventListener("click", (e) => { if (!e.target.closest(".filter-dd")) closeAllDD(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAllDD(); });
-
-  /* Kategori yapılandırması — seriler gerçek Excel sütunlarından türetildi */
   /* Kategori yapılandırması — seriler gerçek Excel sütunlarından türetildi */
   const CFG = {
     yuk: {
@@ -245,7 +234,7 @@
   }
   // Ülke bazlı toplam (seçili yılların toplamı; ay filtresine göre dinamik ölçeklenir).
   function aggCountries(seri) {
-    const rows = bRows().filter((r) => r.boyut === "ulke" && r.seri === seri && state.years.includes(r.yil) && r.deger > 0);
+    const rows = bRows().filter((r) => r.boyut === "ulke" && (!r.seri || r.seri === seri || seri === "toplam") && state.years.includes(r.yil) && r.deger > 0);
     const avail = curAvail();
     const monthRatio = (avail.length && state.months.length < avail.length)
       ? state.months.length / avail.length : 1;
@@ -255,7 +244,7 @@
   }
   // Genel amaçlı yıllık kırılım toplamı — herhangi bir boyut+seri için (roro: arac_cinsi, hat).
   function aggBreakdown(boyut, seri) {
-    const rows = bRows().filter((r) => r.boyut === boyut && r.seri === seri && state.years.includes(r.yil));
+    const rows = bRows().filter((r) => r.boyut === boyut && (!seri || !r.seri || r.seri === seri || seri === "toplam") && state.years.includes(r.yil));
     const avail = curAvail();
     const monthRatio = (avail.length && state.months.length < avail.length)
       ? state.months.length / avail.length : 1;
