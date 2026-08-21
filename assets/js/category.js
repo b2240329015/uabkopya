@@ -154,6 +154,16 @@
   const host = document.getElementById("pageContent");
   if (!cfg || !host) return;
 
+  // Pano ancak veri elde olunca çizilir; o ana kadar boş grafik yerine yükleniyor perdesi
+  // durur. (i18n henüz hazır olmayabilir, bu yüzden metin doğrudan dilden seçilir.)
+  // Ağ hatasında fetch zaten hemen reddediyor; bu süre yalnız "asılı kalan" bağlantılar
+  // için emniyet supabı — normal yükleme (en ağır sayfa konteyner) ~5 sn sürüyor.
+  const LIVE_TIMEOUT_MS = 12000;
+  host.innerHTML = `<section class="page-loading"><div class="wrap">
+      <span class="pl-spin" aria-hidden="true"></span>
+      <p>${(window.MDLang && window.MDLang.get()) === "en" ? "Loading data…" : "Veriler yükleniyor…"}</p>
+    </div></section>`;
+
   let H, P, T, DET, accent, alt2, m, state, years;
 
   const mRows = () => DET.monthly.filter((r) => r.kategori === cat);
@@ -1136,20 +1146,41 @@
   async function loadDetailFromSupabase(catSlug) {
     const h = { apikey: SUPA_KEY, Authorization: "Bearer " + SUPA_KEY };
     // Supabase projesinde sunucu tarafı sabit 1000 satır tavanı var (limit= parametresi
-    // etkisiz) — Range header ile sayfalayarak tüm satırları çekiyoruz.
+    // etkisiz) — Range header ile sayfalıyoruz. İlk istek toplam satır sayısını da
+    // getirir (Prefer: count=exact), kalan sayfalar paralel çekilir: fact_country
+    // 30 binden fazla satır tutuyor, seri sayfalama bunu ~30 gidiş-dönüşe yayıp
+    // sayfayı on saniyelerce bekletiyordu.
+    const PAGE = 1000, POOL = 16;
+    async function page(path, offset, withCount) {
+      const hdr = Object.assign({}, h, { Range: `${offset}-${offset + PAGE - 1}` });
+      if (withCount) hdr.Prefer = "count=exact";
+      const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, { headers: hdr });
+      if (!r.ok && r.status !== 206) throw new Error(path + " → HTTP " + r.status);
+      const total = +((r.headers.get("content-range") || "").split("/")[1]);
+      return { rows: await r.json(), total: Number.isFinite(total) ? total : null };
+    }
     async function get(path) {
-      let all = [], offset = 0;
-      for (;;) {
-        const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
-          headers: Object.assign({}, h, { Range: `${offset}-${offset + 999}` }),
-        });
-        if (!r.ok && r.status !== 206) throw new Error(path + " → HTTP " + r.status);
-        const chunk = await r.json();
-        all = all.concat(chunk);
-        if (chunk.length < 1000) break;
-        offset += 1000;
+      const first = await page(path, 0, true);
+      // Toplam bilinmiyorsa (count başlığı yoksa) eski davranış: dolu sayfa geldikçe devam et
+      if (first.total == null) {
+        let all = first.rows, offset = PAGE;
+        while (all.length && all.length % PAGE === 0) {
+          const nx = await page(path, offset, false);
+          all = all.concat(nx.rows);
+          if (nx.rows.length < PAGE) break;
+          offset += PAGE;
+        }
+        return all;
       }
-      return all;
+      const offsets = [];
+      for (let o = PAGE; o < first.total; o += PAGE) offsets.push(o);
+      const rest = [];
+      // Aynı anda POOL kadar istek: hem hızlı hem de tarayıcı/Supabase kuyruğunu boğmuyor
+      for (let i = 0; i < offsets.length; i += POOL) {
+        const batch = await Promise.all(offsets.slice(i, i + POOL).map((o) => page(path, o, false)));
+        batch.forEach((b) => rest.push(b.rows));
+      }
+      return first.rows.concat(...rest);
     }
     if (catSlug === "bogazlar") {
       // fact_strait: kendi kategorili değil, bogaz sütunuyla ayrışır — monthly şekline dönüştürülür.
@@ -1211,6 +1242,27 @@
     years = yFiltered.sort((a, b) => b - a);
   }
 
+  function paint() {
+    const span = cfg.defaultYearSpan || 1;
+    computeYears();
+    if (!state) {
+      state = { years: years.slice(0, Math.min(span, years.length)), months: [], seri: "toplam",
+        region: "all", tip: "tumu", bayrak: "toplam" };
+      state.months = curAvail();
+    } else if (!state.years.length || !state.years.some((y) => years.includes(y))) {
+      // Yedek veriyle çizilmişken canlı veri gelirse seçili yıllar geçersiz kalabilir
+      state.years = years.slice(0, Math.min(span, years.length));
+      state.months = curAvail();
+    }
+    closeAllDD();
+
+    skeleton();
+    renderFilters();
+    renderDash();
+    renderArchive();
+    window.MDScan && window.MDScan();
+  }
+
   function start() {
     const MD = window.MARITIME_DATA || {};
     H = MD.headline || {}; P = MD.ports || []; T = MD.trend || {};
@@ -1220,38 +1272,21 @@
     document.title = t("cat." + cat) + " — " + t("site.title");
     if (cfg.quad) document.body.classList.add("cat-quad");
 
-    computeYears();
-
-    const span = cfg.defaultYearSpan || 1;
-    state = { years: years.slice(0, Math.min(span, years.length)), months: [], seri: "toplam", region: "all",
-      tip: "tumu", bayrak: "toplam" };
-    state.months = curAvail();
-    closeAllDD();
-
-    skeleton();
-    renderFilters();
-    renderDash();
-    renderArchive();
-    window.MDScan && window.MDScan();
-
-    // Canlı Supabase verisi arka planda çekilip hazır olunca güncellenir (sayfa açılışını asla bloke etmez)
+    // Pano tek seferde, canlı veri elde olduğunda çizilir — yarım/boş grafik görünmesin.
+    // Canlı veri LIVE_TIMEOUT_MS içinde gelmezse gömülü detail/<kat>.js yedeğiyle çizilir,
+    // canlı veri sonradan gelirse pano bir kez tazelenir.
+    let settled = false;
     loadDetailFromSupabase(cat).then((live) => {
       if (live && (live.monthly?.length || live.ports?.length || live.breakdown?.length)) {
         DET = live;
         const MD2 = window.MARITIME_DATA || {};
         H = MD2.headline || H; P = MD2.ports || P; T = MD2.trend || T;
-        computeYears();
-        if (!state.years.length || !state.years.some((y) => years.includes(y))) {
-          state.years = years.slice(0, Math.min(span, years.length));
-        }
-        state.months = curAvail();
-        renderFilters();
-        renderDash();
-        renderArchive();
       }
-    }).catch((e) => {
+    }).catch(() => {
       console.info(`[category] ${cat}: yerel veri devrede.`);
-    });
+    }).then(() => { settled = true; paint(); });
+
+    setTimeout(() => { if (!settled) paint(); }, LIVE_TIMEOUT_MS);
   }
 
   Promise.all([window.MD_READY || Promise.resolve(), window.MD_I18N_READY || Promise.resolve()]).then(start);

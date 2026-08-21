@@ -313,14 +313,33 @@
              { key: "etiket", label: "Etiket" }, { key: "seri", label: "Seri" }, { key: "deger", label: "Değer", type: "number" }] },
     country: { table: "fact_country", pk: ["kategori", "yil", "ulke", "seri"],
       cols: [{ key: "kategori", label: "Kategori" }, { key: "yil", label: "Yıl", type: "number" },
-             { key: "ulke", label: "Ülke" }, { key: "seri", label: "Seri" }, { key: "deger", label: "Değer", type: "number" }] },
+             { key: "ulke", label: "Ülke" }, { key: "seri", label: "Seri" }, { key: "deger", label: "Değer", type: "number" }],
+      label: "ulke" },
+    // Boğazlar sayfası aylık verisini fact_strait'ten okur; kategori sütunu yok,
+    // satırlar "bogaz" ile ayrışır — bu yüzden kategori filtresi yerine boğaz seçilir.
+    strait: { table: "fact_strait", pk: ["bogaz", "yil", "ay"], scope: "bogaz",
+      cols: [{ key: "bogaz", label: "Boğaz" }, { key: "yil", label: "Yıl", type: "number" },
+             { key: "ay", label: "Ay", type: "number" }, { key: "gemi_adedi", label: "Gemi adedi", type: "number" },
+             { key: "gros_ton", label: "Gros ton", type: "number" }, { key: "ugraksiz_gemi", label: "Uğraksız", type: "number" },
+             { key: "kilavuz_alan", label: "Kılavuz alan", type: "number" }, { key: "sp1_veren", label: "SP-1 veren", type: "number" }] },
   };
+  // fact_monthly/port/breakdown/country'de arama yapılacak metin sütunu
+  TABLES.monthly.label = "seri";
+  TABLES.port.label = "liman";
+  TABLES.breakdown.label = "etiket";
+  const BOGAZLAR = ["istanbul", "canakkale"];
+  const DETAIL_PAGE = 200;
+
+  // Panel her açılışta yeniden çizilir; son seçim ve sayfa numarası burada yaşar
+  const dState = { tur: "monthly", kat: "yuk", bogaz: "istanbul", yil: "", ara: "", page: 0, total: 0 };
 
   function renderDetail() {
     const box = $("tab-detail");
+    const cfg = TABLES[dState.tur];
+    const scoped = cfg.scope === "bogaz";
     box.innerHTML = `
       <div class="admin-card">
-        <h2>Detay Veri <span class="admin-hint">(aylık / liman / kırılım / ülke — 26.000+ satır, filtre zorunlu)</span></h2>
+        <h2>Detay Veri <span class="admin-hint">(kategori sayfalarının okuduğu fact_* tabloları)</span></h2>
         <div class="admin-filters">
           <div class="field"><label>Tablo</label>
             <select id="dTur">
@@ -328,29 +347,88 @@
               <option value="port">Liman</option>
               <option value="breakdown">Kırılım</option>
               <option value="country">Ülke</option>
+              <option value="strait">Boğaz (aylık)</option>
             </select></div>
-          <div class="field"><label>Kategori</label>
-            <select id="dKat">${CATS.map((c) => `<option value="${c}">${c}</option>`).join("")}</select></div>
-          <div class="field"><label>Yıl</label><input type="number" id="dYil" placeholder="örn. 2024" value="2024"></div>
+          <div class="field"><label>${scoped ? "Boğaz" : "Kategori"}</label>
+            <select id="dKat">${(scoped ? BOGAZLAR : CATS).map((c) => `<option value="${c}">${c}</option>`).join("")}</select></div>
+          <div class="field"><label>Yıl</label>
+            <input type="number" id="dYil" placeholder="tümü" value="${dState.yil}"></div>
+          <div class="field"><label>${cfg.label === "seri" ? "Seri içerir" : cfg.label ? cfg.label + " içerir" : "Ara"}</label>
+            <input type="text" id="dAra" placeholder="${cfg.label === "seri" ? "örn. yukleme" : "örn. Mersin"}" value="${dState.ara}"
+                   ${cfg.label ? "" : "disabled"}></div>
           <button class="btn btn-primary" id="dGetir" type="button">Getir</button>
         </div>
+        <div id="detailInfo" class="admin-hint"></div>
         <div id="detailTbl"></div>
       </div>`;
-    $("dGetir").addEventListener("click", loadDetail);
+    $("dTur").value = dState.tur;
+    $("dKat").value = scoped ? dState.bogaz : dState.kat;
+    $("dTur").addEventListener("change", () => {
+      dState.yil = $("dYil").value.trim(); // yazılan yıl tablo değişince kaybolmasın
+      dState.tur = $("dTur").value; dState.page = 0;
+      dState.ara = ""; // arama sütunu tabloya göre değişiyor, taşınamaz
+      renderDetail(); // sütun ve filtre etiketleri tabloya göre değişir
+    });
+    $("dKat").addEventListener("change", () => {
+      if (TABLES[dState.tur].scope === "bogaz") dState.bogaz = $("dKat").value;
+      else dState.kat = $("dKat").value;
+      dState.page = 0;
+    });
+    ["dYil", "dAra"].forEach((id) => $(id).addEventListener("keydown", (e) => {
+      if (e.key === "Enter") $("dGetir").click();
+    }));
+    $("dGetir").addEventListener("click", () => { dState.page = 0; loadDetail(); });
+  }
+
+  // Filtreler tek yerde kurulur: hem satırları hem toplam sayıyı aynı koşul üretsin
+  function detailQuery(cfg, select, opts) {
+    let q = sb.from(cfg.table).select(select, opts);
+    q = cfg.scope === "bogaz" ? q.eq("bogaz", dState.bogaz) : q.eq("kategori", dState.kat);
+    if (dState.yil) q = q.eq("yil", +dState.yil);
+    if (dState.ara && cfg.label) q = q.ilike(cfg.label, `%${dState.ara}%`);
+    return q;
   }
 
   async function loadDetail() {
-    const tur = $("dTur").value, kat = $("dKat").value, yil = $("dYil").value;
-    const cfg = TABLES[tur];
-    const tbl = $("detailTbl");
+    const cfg = TABLES[dState.tur];
+    const tbl = $("detailTbl"), info = $("detailInfo");
+    dState.yil = $("dYil").value.trim();
+    dState.ara = $("dAra").value.trim();
     tbl.innerHTML = "Yükleniyor…";
-    let q = sb.from(cfg.table).select("*").eq("kategori", kat);
-    if (yil) q = q.eq("yil", +yil);
-    q = q.limit(500);
-    const { data, error } = await q;
-    if (error) { tbl.innerHTML = `<p class="err">${error.message}</p>`; return; }
-    if (!data.length) { tbl.innerHTML = `<p class="admin-hint">Sonuç yok. (500 satır sınırı — daha dar filtre dene)</p>`; return; }
+    info.textContent = "";
+
+    const from = dState.page * DETAIL_PAGE;
+    // count:"exact" toplamı da getirir — kaç satırın filtreye uyduğu görünsün
+    const { data, error, count } = await detailQuery(cfg, "*", { count: "exact" })
+      .order("yil", { ascending: false })
+      .range(from, from + DETAIL_PAGE - 1);
+
+    if (error) {
+      // Sonuç kümesi küçüldüğünde (silme/filtre değişimi) istenen aralık boşa düşebilir
+      if (dState.page > 0 && /range not satisfiable/i.test(error.message)) {
+        dState.page = 0; return loadDetail();
+      }
+      tbl.innerHTML = `<p class="err">${error.message}</p>`; return;
+    }
+    dState.total = count || 0;
+    if (!data.length) {
+      tbl.innerHTML = "";
+      info.textContent = dState.page > 0 ? "Bu sayfada satır yok." : "Filtreye uyan satır yok.";
+      return;
+    }
+    const last = Math.max(0, Math.ceil(dState.total / DETAIL_PAGE) - 1);
+    info.innerHTML = `${nf.format(dState.total)} satır · ${from + 1}–${from + data.length} arası gösteriliyor`
+      + (last > 0 ? ` · sayfa ${dState.page + 1}/${last + 1}` : "");
     buildTable(tbl, { table: cfg.table, pk: cfg.pk, rows: data, columns: cfg.cols });
+    if (last > 0) {
+      const nav = document.createElement("div");
+      nav.className = "admin-pager";
+      nav.innerHTML = `<button type="button" class="btn btn-ghost" id="dPrev" ${dState.page === 0 ? "disabled" : ""}>← Önceki</button>
+        <button type="button" class="btn btn-ghost" id="dNext" ${dState.page >= last ? "disabled" : ""}>Sonraki →</button>`;
+      tbl.appendChild(nav);
+      $("dPrev").addEventListener("click", () => { dState.page--; loadDetail(); });
+      $("dNext").addEventListener("click", () => { dState.page++; loadDetail(); });
+    }
   }
 
   /* ---------- Başlat ---------- */
