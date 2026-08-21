@@ -988,26 +988,28 @@ body.cat-quad .cat-filters { position: static; top: auto; }
    Bilerek akış-içi (position:absolute DEĞİL): panel açılınca filtre kutusu
    uzar, altındaki filtre gruplarını KAPLAMAZ (önceki sürümde "Ay" bölümünün
    üzerine biniyordu). */
-.filter-dd { position: relative; }
+.filter-dd { position: relative; width: 100%; }
 .filter-dd-btn {
   width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 10px 12px; border-radius: 10px; font: inherit; font-size: .92rem; font-weight: 600;
-  background: var(--bg-alt); border: 1px solid var(--border); color: var(--text); cursor: pointer; text-align: left;
+  padding: 10px 14px; border-radius: 10px; font: inherit; font-size: .92rem; font-weight: 700;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text); cursor: pointer; text-align: left;
+  transition: border-color .15s, background .15s;
 }
 .filter-dd-btn:hover { border-color: var(--accent); }
 .filter-dd-btn span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dd-chev { font-size: .7rem; color: var(--text-dim); flex: none; }
 .filter-dd-panel {
-  margin-top: 8px;
+  position: absolute; top: calc(100% + 6px); left: 0; width: 100%; z-index: 100;
   background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px;
-  box-shadow: var(--shadow-soft); padding: 10px; max-height: 260px; display: flex; flex-direction: column; gap: 8px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.55); padding: 10px; max-height: 280px; display: flex; flex-direction: column; gap: 8px;
 }
-.filter-dd-actions { display: flex; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.filter-dd-panel[hidden] { display: none !important; }
+.filter-dd-actions { display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
 .filter-dd-actions button {
-  background: none; border: none; color: var(--accent); font-size: .76rem; font-weight: 600; padding: 2px 4px;
+  background: none; border: none; color: var(--accent); font-size: .78rem; font-weight: 700; padding: 2px 6px; cursor: pointer;
 }
-.filter-dd-actions button:hover { text-decoration: underline; }
-.filter-dd-list { overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.filter-dd-actions button:hover { text-decoration: underline; color: var(--white); }
+.filter-dd-list { overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
 .filter-dd-item {
   display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px;
   font-size: .88rem; font-weight: 600; color: var(--text); cursor: pointer; transition: background .15s, color .15s;
