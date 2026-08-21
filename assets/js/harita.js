@@ -14,7 +14,7 @@
   D = window.MARITIME_DATA; P = D.ports;
   host.innerHTML = `
     <section class="page-hero"><div class="wrap">
-      <div class="breadcrumb reveal"><a href="./" data-i18n="nav.home">${t("nav.home")}</a> ${window.__arrow("right")} <span data-i18n="nav.map">${t("nav.map")}</span></div>
+      <div class="breadcrumb reveal"><a href="index.html" data-i18n="nav.home">${t("nav.home")}</a> ${window.__arrow("right")} <span data-i18n="nav.map">${t("nav.map")}</span></div>
       <h1 class="reveal" data-i18n="map.title">${t("map.title")}</h1>
       <p class="intro reveal d1" data-i18n="map.lead">${t("map.lead")}</p>
     </div></section>

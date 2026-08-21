@@ -16,15 +16,15 @@
     ((p || "").split(/[?#]/)[0].split("/").pop() || "index").replace(/\.html$/, "") || "index";
 
   const NAV = [
-    { href: "yuk", k: "nav.yuk" },
-    { href: "konteyner", k: "nav.konteyner" },
-    { href: "bogazlar", k: "nav.bogazlar" },
-    { href: "kabotaj", k: "nav.kabotaj" },
-    { href: "kruvaziyer", k: "nav.kruvaziyer" },
-    { href: "roro", k: "nav.roro" },
-    { href: "gemi", k: "nav.gemi" },
-    { href: "filo", k: "nav.filo" },
-    { href: "dosyalar", k: "nav.dosyalar" },
+    { href: "yuk.html", k: "nav.yuk" },
+    { href: "konteyner.html", k: "nav.konteyner" },
+    { href: "bogazlar.html", k: "nav.bogazlar" },
+    { href: "kabotaj.html", k: "nav.kabotaj" },
+    { href: "kruvaziyer.html", k: "nav.kruvaziyer" },
+    { href: "roro.html", k: "nav.roro" },
+    { href: "gemi.html", k: "nav.gemi" },
+    { href: "filo.html", k: "nav.filo" },
+    { href: "dosyalar.html", k: "nav.dosyalar" },
   ];
 
   const ICON = {
@@ -40,14 +40,14 @@
     <span class="topbar-org" data-i18n="site.org">${t("site.org")}</span>
     <div class="links">
       <a href="${t("url.uab")}" target="_blank" rel="noopener" data-i18n="nav.uab" data-i18n-href="url.uab">${t("nav.uab")}</a>
-      <a href="site-haritasi" data-i18n="nav.sitemap">${t("nav.sitemap")}</a>
-      <a href="iletisim" data-i18n="nav.contact">${t("nav.contact")}</a>
+      <a href="site-haritasi.html" data-i18n="nav.sitemap">${t("nav.sitemap")}</a>
+      <a href="iletisim.html" data-i18n="nav.contact">${t("nav.contact")}</a>
       <button class="lang-btn" id="langBtn" type="button">${ICON.globe}<span data-i18n="ui.lang">${t("ui.lang")}</span></button>
     </div>
   </div></div>
   <header class="site-header">
     <div class="wrap nav">
-      <a class="brand" href="./" aria-label="${t("nav.home")}">
+      <a class="brand" href="index.html" aria-label="${t("nav.home")}">
         <span class="brand-mark"><img class="brand-logo" src="assets/img/uab-logo.svg" alt="${t("site.org")}" width="176" height="57"></span>
         <span class="brand-divider"></span>
         <span class="brand-sub"><span data-i18n="site.sub1">${t("site.sub1")}</span><br><b data-i18n="site.sub2">${t("site.sub2")}</b></span>
@@ -101,13 +101,13 @@
         </div>
 
         <nav class="footer-links" aria-label="${t("footer.corp")}">
-          <a href="./" data-i18n="nav.home">${t("nav.home")}</a>
+          <a href="index.html" data-i18n="nav.home">${t("nav.home")}</a>
           <a href="${t("url.dgm")}" target="_blank" rel="noopener" data-i18n="footer.dgm" data-i18n-href="url.dgm">${t("footer.dgm")}</a>
-          <a href="dosyalar" data-i18n="nav.dosyalar">${t("nav.dosyalar")}</a>
-          <a href="harita" data-i18n="nav.map">${t("nav.map")}</a>
-          <a href="diger-istatistikler" data-i18n="nav.other">${t("nav.other")}</a>
-          <a href="iletisim" data-i18n="nav.contact">${t("nav.contact")}</a>
-          <a href="site-haritasi" data-i18n="nav.sitemap">${t("nav.sitemap")}</a>
+          <a href="dosyalar.html" data-i18n="nav.dosyalar">${t("nav.dosyalar")}</a>
+          <a href="harita.html" data-i18n="nav.map">${t("nav.map")}</a>
+          <a href="diger-istatistikler.html" data-i18n="nav.other">${t("nav.other")}</a>
+          <a href="iletisim.html" data-i18n="nav.contact">${t("nav.contact")}</a>
+          <a href="site-haritasi.html" data-i18n="nav.sitemap">${t("nav.sitemap")}</a>
           <a href="${t("url.kvkk")}" target="_blank" rel="noopener" data-i18n="footer.kvkk" data-i18n-href="url.kvkk">${t("footer.kvkk")}</a>
         </nav>
       </div>

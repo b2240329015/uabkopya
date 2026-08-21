@@ -303,7 +303,7 @@
   function skeleton() {
     host.innerHTML = `
     <section class="page-hero"><div class="wrap">
-      <div class="breadcrumb"><a href="./" data-i18n="nav.home">${t("nav.home")}</a> ${arrow("right")} <span data-i18n="cat.${cat}">${t("cat." + cat)}</span></div>
+      <div class="breadcrumb"><a href="index.html" data-i18n="nav.home">${t("nav.home")}</a> ${arrow("right")} <span data-i18n="cat.${cat}">${t("cat." + cat)}</span></div>
       <div class="page-title">
         <span class="page-icon" style="color:${accent}">${icon(cfg.ic)}</span>
         <h1 data-i18n="cat.${cat}">${t("cat." + cat)}</h1>
@@ -407,7 +407,7 @@
       h += btnGroup("region", "ui.region", [["all", "ui.all"]].concat(SEAS.map(([v, k]) => [v, k])), state.region);
     }
 
-    h += `<a class="btn btn-ghost filter-src" href="dosyalar?kat=${cfg.arch}"><span data-i18n="ui.viewFiles">${t("ui.viewFiles")}</span> ${arrow("right")}</a>`;
+    h += `<a class="btn btn-ghost filter-src" href="dosyalar.html?kat=${cfg.arch}"><span data-i18n="ui.viewFiles">${t("ui.viewFiles")}</span> ${arrow("right")}</a>`;
     box.innerHTML = h;
 
     // Yıl Dropdown Olayları
@@ -1134,7 +1134,7 @@
     if (!box) return;
     if (!a) { box.innerHTML = ""; return; }
     const total = Object.values(a.yillar).reduce((s, v) => s + v.length, 0);
-    box.innerHTML = `<a class="files-cta" href="dosyalar?kat=${cfg.arch}">
+    box.innerHTML = `<a class="files-cta" href="dosyalar.html?kat=${cfg.arch}">
       <span class="fc-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3v5h5M7 3h8l5 5v11a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg></span>
       <span class="fc-tx"><b data-i18n="ui.viewFiles">${t("ui.viewFiles")}</b><span>${total.toLocaleString(loc)} <span data-i18n="ui.files">${t("ui.files")}</span></span></span>
       ${arrow("right")}</a>`;
@@ -1207,28 +1207,7 @@
     return out;
   }
 
-  async function start() {
-    try {
-      await Promise.all([window.MD_READY || Promise.resolve(), window.MD_I18N_READY || Promise.resolve()]);
-      const live = await loadDetailFromSupabase(cat);
-      if (live && (live.monthly?.length || live.ports?.length || live.breakdown?.length)) {
-        DET = live;
-        console.info(`[category] ${cat}: Supabase verisi yüklendi.`);
-      } else {
-        DET = window.DETAIL_DATA || { monthly: [], ports: [], breakdown: [] };
-      }
-    } catch (e) {
-      console.info(`[category] ${cat}: Yerel veri kullanılıyor:`, e.message);
-      DET = window.DETAIL_DATA || { monthly: [], ports: [], breakdown: [] };
-    }
-
-    const MD = window.MARITIME_DATA || {};
-    H = MD.headline || {}; P = MD.ports || []; T = MD.trend || {};
-    m = (H && H[cfg.headKey]) || { deger: 0, yil: 2026 };
-    accent = getComputedStyle(document.documentElement).getPropertyValue(cfg.accent).trim();
-    document.title = t("cat." + cat) + " — " + t("site.title");
-    if (cfg.quad) document.body.classList.add("cat-quad");
-
+  function computeYears() {
     const ys = new Set();
     if (cfg.yearsOnly) {
       cfg.metrics.forEach((mt) => { const tr2 = T[mt.key]; if (tr2) Object.keys(tr2).forEach((y) => ys.add(+y)); });
@@ -1241,6 +1220,18 @@
     if (!ys.size && m.yil) ys.add(m.yil);
     const yFiltered = cfg.yearMin ? [...ys].filter((y) => y >= cfg.yearMin) : [...ys];
     years = yFiltered.sort((a, b) => b - a);
+  }
+
+  function start() {
+    const MD = window.MARITIME_DATA || {};
+    H = MD.headline || {}; P = MD.ports || []; T = MD.trend || {};
+    DET = window.DETAIL_DATA || { monthly: [], ports: [], breakdown: [] };
+    m = (H && H[cfg.headKey]) || { deger: 0, yil: 2026 };
+    accent = getComputedStyle(document.documentElement).getPropertyValue(cfg.accent).trim();
+    document.title = t("cat." + cat) + " — " + t("site.title");
+    if (cfg.quad) document.body.classList.add("cat-quad");
+
+    computeYears();
 
     const span = cfg.defaultYearSpan || 1;
     state = { years: years.slice(0, Math.min(span, years.length)), months: [], seri: "toplam", region: "all",
@@ -1253,11 +1244,26 @@
     renderDash();
     renderArchive();
     window.MDScan && window.MDScan();
+
+    // Canlı Supabase verisi arka planda çekilip hazır olunca güncellenir (sayfa açılışını asla bloke etmez)
+    loadDetailFromSupabase(cat).then((live) => {
+      if (live && (live.monthly?.length || live.ports?.length || live.breakdown?.length)) {
+        DET = live;
+        const MD2 = window.MARITIME_DATA || {};
+        H = MD2.headline || H; P = MD2.ports || P; T = MD2.trend || T;
+        computeYears();
+        if (!state.years.length || !state.years.some((y) => years.includes(y))) {
+          state.years = years.slice(0, Math.min(span, years.length));
+        }
+        state.months = curAvail();
+        renderFilters();
+        renderDash();
+        renderArchive();
+      }
+    }).catch((e) => {
+      console.info(`[category] ${cat}: yerel veri devrede.`);
+    });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", start);
-  } else {
-    start();
-  }
+  Promise.all([window.MD_READY || Promise.resolve(), window.MD_I18N_READY || Promise.resolve()]).then(start);
 })();

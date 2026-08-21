@@ -13,21 +13,21 @@
 
   // KPI tanımları — trend, anahtarla (trendKey) çalışma anında okunur
   const KPIS = [
-    { key: "yuk_ton", href: "yuk", ic: "yuk", c: "--c-yuk", unitKey: "unit.ton",
+    { key: "yuk_ton", href: "yuk.html", ic: "yuk", c: "--c-yuk", unitKey: "unit.ton",
       labelKey: "kpi.yuk", trendKey: "yuk_ton" },
-    { key: "konteyner_teu", href: "konteyner", ic: "konteyner", c: "--c-konteyner", unitKey: "unit.teu",
+    { key: "konteyner_teu", href: "konteyner.html", ic: "konteyner", c: "--c-konteyner", unitKey: "unit.teu",
       labelKey: "kpi.konteyner", trendKey: "konteyner_teu" },
-    { key: "gemi_sayisi", href: "gemi", ic: "gemi", c: "--c-gemi", unitKey: "unit.gemi",
+    { key: "gemi_sayisi", href: "gemi.html", ic: "gemi", c: "--c-gemi", unitKey: "unit.gemi",
       labelKey: "kpi.gemi", trendKey: "gemi_gros_ton" },
-    { key: "bogaz_gecis", href: "bogazlar", ic: "bogaz", c: "--c-bogaz", unitKey: "unit.gecis",
+    { key: "bogaz_gecis", href: "bogazlar.html", ic: "bogaz", c: "--c-bogaz", unitKey: "unit.gecis",
       labelKey: "kpi.bogaz", trendKey: null },
-    { key: "kruvaziyer_yolcu", href: "kruvaziyer", ic: "kruvaziyer", c: "--c-kruvaziyer", unitKey: "unit.yolcu",
+    { key: "kruvaziyer_yolcu", href: "kruvaziyer.html", ic: "kruvaziyer", c: "--c-kruvaziyer", unitKey: "unit.yolcu",
       labelKey: "kpi.kruvaziyer", trendKey: "kruvaziyer_yolcu" },
-    { key: "roro_arac", href: "roro", ic: "roro", c: "--c-roro", unitKey: "unit.arac",
+    { key: "roro_arac", href: "roro.html", ic: "roro", c: "--c-roro", unitKey: "unit.arac",
       labelKey: "kpi.roro", trendKey: "roro_arac_yil" },
-    { key: "kabotaj_yolcu", href: "kabotaj", ic: "kabotaj", c: "--c-kabotaj", unitKey: "unit.yolcu",
+    { key: "kabotaj_yolcu", href: "kabotaj.html", ic: "kabotaj", c: "--c-kabotaj", unitKey: "unit.yolcu",
       labelKey: "kpi.kabotaj", trendKey: "kabotaj_yolcu" },
-    { key: "filo_gemi", href: "filo", ic: "filo", c: "--c-filo", unitKey: "unit.gemi",
+    { key: "filo_gemi", href: "filo.html", ic: "filo", c: "--c-filo", unitKey: "unit.gemi",
       labelKey: "kpi.filo", trendKey: null },
   ];
 
