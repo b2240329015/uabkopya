@@ -338,6 +338,48 @@
     }));
   }
 
+  /* Çoklu seçim açılır listesi (yıl/ay) */
+  let ddOpen = { years: false, months: false };
+  function closeAllDD() {
+    ddOpen.years = false; ddOpen.months = false;
+    document.querySelectorAll(".filter-dd-panel").forEach((p) => (p.hidden = true));
+    document.querySelectorAll(".filter-dd-btn").forEach((b) => b.setAttribute("aria-expanded", "false"));
+  }
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".filter-dd")) closeAllDD();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAllDD();
+  });
+
+  function ddBlock(type, labelKey, summaryText, items, selSet) {
+    const isOpen = ddOpen[type];
+    return `<div class="filter-group">
+      <label data-i18n="${labelKey}">${t(labelKey)}</label>
+      <div class="filter-dd" data-dd="${type}">
+        <button type="button" class="filter-dd-btn" aria-haspopup="true" aria-expanded="${isOpen}">
+          <span>${summaryText}</span>
+          <span class="dd-chev">▼</span>
+        </button>
+        <div class="filter-dd-panel" ${isOpen ? "" : "hidden"}>
+          <div class="filter-dd-actions">
+            <button type="button" class="btn-all" data-i18n="ui.selectAll">${t("ui.selectAll")}</button>
+            <button type="button" class="btn-clear" data-i18n="ui.clear">${t("ui.clear")}</button>
+          </div>
+          <div class="filter-dd-list">
+            ${items.map((it) => {
+              const checked = selSet.has(it.v);
+              return `<label class="filter-dd-item">
+                <input type="checkbox" value="${it.v}" ${checked ? "checked" : ""}>
+                <span>${it.l}</span>
+              </label>`;
+            }).join("")}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   function renderFilters() {
     const box = document.getElementById("catFilters");
     if (!box) return;
@@ -345,24 +387,16 @@
     const want = cfg.filters || (cfg.yearsOnly ? ["years"] : ["years", "months"]);
     let h = `<div class="filter-head">${icon(cfg.ic)} <span data-i18n="ui.filter">${t("ui.filter")}</span></div>`;
 
-    // Sade ve net yıl seçimi: 2026'ya basınca diğer yıllar açılır
-    h += `<div class="filter-group">
-      <label for="fYear" data-i18n="ui.year">${t("ui.year")}</label>
-      <select class="filter-select" id="fYear">
-        ${years.map((y) => `<option value="${y}"${y === state.years[0] ? " selected" : ""}>${y}</option>`).join("")}
-      </select>
-    </div>`;
+    // Yıl Çoklu Seçim Dropdown'ı
+    const selYears = new Set(state.years);
+    const yearItems = years.map((y) => ({ v: y, l: String(y) }));
+    h += ddBlock("years", "ui.year", yearsSummary(), yearItems, selYears);
 
-    // Ay seçimi (aylık verisi olan sayfalar)
+    // Ay Çoklu Seçim Dropdown'ı
     if (want.includes("months") && avail.length) {
-      const isAll = state.months.length === avail.length;
-      h += `<div class="filter-group">
-        <label for="fMonth" data-i18n="ui.month">${t("ui.month")}</label>
-        <select class="filter-select" id="fMonth">
-          <option value="all"${isAll ? " selected" : ""}>${t("ui.all")} (${avail.length} Ay)</option>
-          ${avail.map((mo) => `<option value="${mo}"${!isAll && state.months.length === 1 && state.months[0] === mo ? " selected" : ""}>${MON()[mo - 1]}</option>`).join("")}
-        </select>
-      </div>`;
+      const selMonths = new Set(state.months);
+      const monthItems = avail.map((mo) => ({ v: mo, l: MON()[mo - 1] }));
+      h += ddBlock("months", "ui.month", monthsLabel(avail), monthItems, selMonths);
     }
 
     if (want.includes("bogaz")) h += btnGroup("bogaz", "ui.strait", FILTER_OPTS.bogaz, state.bogaz || "istanbul");
@@ -376,21 +410,84 @@
     h += `<a class="btn btn-ghost filter-src" href="dosyalar?kat=${cfg.arch}"><span data-i18n="ui.viewFiles">${t("ui.viewFiles")}</span> ${arrow("right")}</a>`;
     box.innerHTML = h;
 
-    const selYear = box.querySelector("#fYear");
-    if (selYear) {
-      selYear.addEventListener("change", (e) => {
-        state.years = [+e.target.value];
+    // Yıl Dropdown Olayları
+    const ddY = box.querySelector('.filter-dd[data-dd="years"]');
+    if (ddY) {
+      const btn = ddY.querySelector(".filter-dd-btn");
+      const panel = ddY.querySelector(".filter-dd-panel");
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const next = !ddOpen.years;
+        closeAllDD();
+        ddOpen.years = next;
+        panel.hidden = !next;
+        btn.setAttribute("aria-expanded", String(next));
+      });
+      panel.addEventListener("click", (e) => e.stopPropagation());
+      ddY.querySelector(".btn-all")?.addEventListener("click", () => {
+        state.years = [...years];
         state.months = curAvail();
         renderFilters(); renderDash();
       });
+      ddY.querySelector(".btn-clear")?.addEventListener("click", () => {
+        state.years = [years[0]];
+        state.months = curAvail();
+        renderFilters(); renderDash();
+      });
+      ddY.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+        cb.addEventListener("change", () => {
+          const val = +cb.value;
+          if (cb.checked) {
+            if (!state.years.includes(val)) state.years.push(val);
+          } else {
+            if (state.years.length > 1) {
+              state.years = state.years.filter((y) => y !== val);
+            } else {
+              cb.checked = true;
+            }
+          }
+          state.months = curAvail();
+          renderFilters(); renderDash();
+        });
+      });
     }
 
-    const selMonth = box.querySelector("#fMonth");
-    if (selMonth) {
-      selMonth.addEventListener("change", (e) => {
-        if (e.target.value === "all") state.months = curAvail();
-        else state.months = [+e.target.value];
+    // Ay Dropdown Olayları
+    const ddM = box.querySelector('.filter-dd[data-dd="months"]');
+    if (ddM) {
+      const btn = ddM.querySelector(".filter-dd-btn");
+      const panel = ddM.querySelector(".filter-dd-panel");
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const next = !ddOpen.months;
+        closeAllDD();
+        ddOpen.months = next;
+        panel.hidden = !next;
+        btn.setAttribute("aria-expanded", String(next));
+      });
+      panel.addEventListener("click", (e) => e.stopPropagation());
+      ddM.querySelector(".btn-all")?.addEventListener("click", () => {
+        state.months = curAvail();
         renderFilters(); renderDash();
+      });
+      ddM.querySelector(".btn-clear")?.addEventListener("click", () => {
+        state.months = [avail[0]];
+        renderFilters(); renderDash();
+      });
+      ddM.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+        cb.addEventListener("change", () => {
+          const val = +cb.value;
+          if (cb.checked) {
+            if (!state.months.includes(val)) state.months.push(val);
+          } else {
+            if (state.months.length > 1) {
+              state.months = state.months.filter((m) => m !== val);
+            } else {
+              cb.checked = true;
+            }
+          }
+          renderFilters(); renderDash();
+        });
       });
     }
 
