@@ -969,6 +969,9 @@ body.cat-quad .cat-filters { position: static; top: auto; }
   background: var(--bg-alt); border: 1px solid var(--border); color: var(--text); cursor: pointer;
 }
 .filter-select:focus { outline: none; border-color: var(--accent); }
+/* Dönem aralığı: iki küçük select yan yana (kruvaziyer) */
+.filter-range-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.filter-select-sm { padding: 7px 8px; font-size: 0.78rem; border-radius: 8px; }
 .filter-group label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .filter-actions { display: inline-flex; gap: 6px; }
 .filter-actions button {

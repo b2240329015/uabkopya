@@ -82,6 +82,9 @@
       series: [{ k: "gelen", key: "series.gelen" }, { k: "giden", key: "series.giden" },
                { k: "transit", key: "series.transit" }],
       quad: true, defaultYearSpan: 1,
+      // Yıl+ay çoklu seçim yerine kronolojik dönem aralığı: veri aylık ve takvim yılı
+      // sınırını aşan pencereler (örn. Tem'25–Nis'26) anlamlı — bkz. rangeFilterBlock().
+      filters: ["range"],
       cards: [
         { type: "sum", seri: "toplam", labelKey: "kruvaziyer.kpiTotal", unitKey: "unit.yolcu" },
         { type: "topPortShare", seri: "toplam", labelKey: "kruvaziyer.kpiTopPort", unitKey: "unit.yolcu" },
@@ -197,8 +200,71 @@
     state.years.forEach((y) => monthsFor(y).forEach((mo) => set.add(mo)));
     return [...set].sort((a, b) => a - b);
   }
-  const sumSel = (seri) => state.years.reduce((tot, y) =>
-    tot + state.months.reduce((s, mo) => s + mVal(y, mo, seri), 0), 0);
+
+  /* ---------- Dönem aralığı (cfg.filters içerir "range" — kruvaziyer) ----------
+     Yıl bazlı çoklu seçimin aksine (state.years × state.months kartezyen çarpımı,
+     her seçili yılda AYNI ayları ister), aralık modu takvim yılı sınırını aşan
+     kronolojik bir pencere ifade eder (örn. Temmuz 2025 – Nisan 2026). Veri setindeki
+     TÜM (yıl, ay) çiftlerini tek sıralı bir zaman çizelgesine indirip aralığa göre keser. */
+  function allPeriods() {
+    const out = [];
+    [...years].sort((a, b) => a - b).forEach((y) => monthsFor(y).forEach((mo) => out.push({ y, mo })));
+    return out;
+  }
+  function periodsInRange(fromY, fromM, toY, toM) {
+    const lo = fromY * 12 + fromM, hi = toY * 12 + toM;
+    return allPeriods().filter(({ y, mo }) => { const v = y * 12 + mo; return v >= lo && v <= hi; });
+  }
+  function applyRange(fromY, fromM, toY, toM) {
+    state.range = { fromY, fromM, toY, toM };
+    state.periods = periodsInRange(fromY, fromM, toY, toM);
+    state.years = [...new Set(state.periods.map((p) => p.y))].sort((a, b) => a - b);
+  }
+  // Varsayılan/kurtarma penceresi: veride mevcut son 12 ay. "Bu yıl" değil — 2026 gibi
+  // yıl-içi eksik bir takvim yılı yerine, her zaman tam ve karşılaştırılabilir bir
+  // pencereyle açılsın diye.
+  function resetToDefaultRange() {
+    const flat = allPeriods();
+    if (!flat.length) { state.range = null; state.periods = []; state.years = []; return; }
+    const from = flat[Math.max(0, flat.length - 12)], to = flat[flat.length - 1];
+    applyRange(from.y, from.mo, to.y, to.mo);
+  }
+  // Seçili dönem — legacy sayfalarda state.years × state.months'un kartezyen çarpımı,
+  // aralık modunda applyRange()'in ürettiği kronolojik liste.
+  function selPeriods() {
+    if (state.range) return state.periods || [];
+    const out = [];
+    state.years.forEach((y) => state.months.forEach((mo) => out.push({ y, mo })));
+    return out;
+  }
+  const sumSel = (seri) => selPeriods().reduce((s, { y, mo }) => s + mVal(y, mo, seri), 0);
+  // Liman/ülke/kırılım verisi yıllık (ay kolonu yok) — kısmi dönem seçiminde yıllık
+  // toplam, o yılın seçili ay ORANINA göre ölçeklenir. Her yıl KENDİ mevcut ay sayısına
+  // göre oranlanır (eskiden tüm seçili yıllar için TEK ortak oran kullanılıyordu — 2026
+  // gibi yıl-içi eksik bir yıl tam yıllarla birlikte seçildiğinde yanlış sonuç verirdi).
+  function yearRatioMap() {
+    const byYear = {};
+    selPeriods().forEach(({ y, mo }) => { (byYear[y] = byYear[y] || new Set()).add(mo); });
+    const m = {};
+    Object.keys(byYear).forEach((y) => {
+      const avail = monthsFor(+y).length;
+      m[y] = avail ? Math.min(1, byYear[y].size / avail) : 1;
+    });
+    return m;
+  }
+  function periodLabel(y, mo) { return `${MON()[mo - 1]} '${String(y).slice(2)}`; }
+  function periodRangeLabel(r) {
+    const a = periodLabel(r.fromY, r.fromM), b = periodLabel(r.toY, r.toM);
+    return a === b ? a : `${a} – ${b}`;
+  }
+  // Uzun aralıklarda (örn. "Tüm Zamanlar" → 15+ yıl) her ayı etiketlemek grafiği okunmaz
+  // yapar — yalnız her N. noktanın (+ son nokta) metnini bırakır, diğerleri boş kalır
+  // (nokta yine çizilir, sadece alt eksen etiketi gizlenir).
+  function thinLabels(labels, maxTicks) {
+    if (labels.length <= maxTicks) return labels;
+    const step = Math.ceil(labels.length / maxTicks);
+    return labels.map((lb, i) => (i % step === 0 || i === labels.length - 1) ? lb : "");
+  }
 
   /* Bileşik seri adı: "{tip}__{akim}__{boyut}" (konteyner). Boyut verilmezse
      bayrak filtresi kullanılır. cfg.composed olmayan sayfalarda seri adı sabittir. */
@@ -228,38 +294,32 @@
     })).filter((x) => x.deger > 0);
   }
 
-  // Liman bazlı toplam (seçili yılların toplamı; ay filtresine göre dinamik ölçeklenir).
+  // Liman bazlı toplam (seçili yılların toplamı; her yıl kendi ay oranına göre ölçeklenir).
   function aggPorts(seri) {
     let rows = pRows().filter((r) => r.seri === seri && state.years.includes(r.yil) && r.deger > 0);
     if (state.region !== "all") {
       const inR = new Set(P.filter((p) => p.sea === state.region).map((p) => p.name));
       rows = rows.filter((r) => inR.has(r.liman));
     }
-    const avail = curAvail();
-    const monthRatio = (avail.length && state.months.length < avail.length)
-      ? state.months.length / avail.length : 1;
+    const rm = yearRatioMap();
     const agg = {};
-    rows.forEach((r) => { agg[r.liman] = (agg[r.liman] || 0) + (r.deger * monthRatio); });
+    rows.forEach((r) => { agg[r.liman] = (agg[r.liman] || 0) + (r.deger * (rm[r.yil] ?? 1)); });
     return Object.keys(agg).map((liman) => ({ liman, deger: Math.round(agg[liman]) })).sort((a, b) => b.deger - a.deger);
   }
-  // Ülke bazlı toplam (seçili yılların toplamı; ay filtresine göre dinamik ölçeklenir).
+  // Ülke bazlı toplam (seçili yılların toplamı; her yıl kendi ay oranına göre ölçeklenir).
   function aggCountries(seri) {
     const rows = bRows().filter((r) => r.boyut === "ulke" && (!r.seri || r.seri === seri || seri === "toplam") && state.years.includes(r.yil) && r.deger > 0);
-    const avail = curAvail();
-    const monthRatio = (avail.length && state.months.length < avail.length)
-      ? state.months.length / avail.length : 1;
+    const rm = yearRatioMap();
     const agg = {};
-    rows.forEach((r) => { agg[r.etiket] = (agg[r.etiket] || 0) + (r.deger * monthRatio); });
+    rows.forEach((r) => { agg[r.etiket] = (agg[r.etiket] || 0) + (r.deger * (rm[r.yil] ?? 1)); });
     return Object.keys(agg).map((etiket) => ({ etiket, deger: Math.round(agg[etiket]) })).sort((a, b) => b.deger - a.deger);
   }
   // Genel amaçlı yıllık kırılım toplamı — herhangi bir boyut+seri için (roro: arac_cinsi, hat).
   function aggBreakdown(boyut, seri) {
     const rows = bRows().filter((r) => r.boyut === boyut && (!seri || !r.seri || r.seri === seri || seri === "toplam") && state.years.includes(r.yil));
-    const avail = curAvail();
-    const monthRatio = (avail.length && state.months.length < avail.length)
-      ? state.months.length / avail.length : 1;
+    const rm = yearRatioMap();
     const agg = {};
-    rows.forEach((r) => { agg[r.etiket] = (agg[r.etiket] || 0) + (r.deger * monthRatio); });
+    rows.forEach((r) => { agg[r.etiket] = (agg[r.etiket] || 0) + (r.deger * (rm[r.yil] ?? 1)); });
     return Object.keys(agg).map((etiket) => ({ etiket, deger: Math.round(agg[etiket]) })).sort((a, b) => b.deger - a.deger);
   }
   // Ardışık ayları "Oca-Tem" gibi aralığa sıkıştırır; ardışık olmayanları virgülle ayırır
@@ -283,6 +343,7 @@
     return { labels: ys.map(String), values: ys.map((y) => state.months.reduce((s, mo) => s + mVal(y, mo, seri), 0)) };
   }
   function yearsSummary() {
+    if (state.range) return periodRangeLabel(state.range);
     if (state.years.length === 1) return String(state.years[0]);
     const sorted = [...state.years].sort((a, b) => a - b);
     if (sorted.length === years.length) return t("ui.all");
@@ -379,6 +440,52 @@
     </div>`;
   }
 
+  // Dönem hızlı seçenekleri — veri setindeki gerçek en eski/en yeni aya göre türetilir
+  // (sabit tarih yok, veri büyüdükçe otomatik kayar). "Bu Yıl"/"Geçen Yıl" o yılın
+  // veride bulunan ilk-son ayını kullanır (2026 gibi yıl-içi eksik yıllarda da doğru).
+  function rangePresets(flat) {
+    if (!flat.length) return [];
+    const last = flat[flat.length - 1], first = flat[0];
+    const slice = (n) => flat[Math.max(0, flat.length - n)];
+    const yearBounds = (y) => {
+      const ys = flat.filter((p) => p.y === y);
+      return ys.length ? { from: ys[0], to: ys[ys.length - 1] } : null;
+    };
+    const thisY = yearBounds(last.y), prevY = yearBounds(last.y - 1);
+    const out = [
+      { key: "last12", labelKey: "ui.rangeLast12", from: slice(12), to: last },
+      { key: "last24", labelKey: "ui.rangeLast24", from: slice(24), to: last },
+    ];
+    if (thisY) out.push({ key: "thisYear", labelKey: "ui.rangeThisYear", from: thisY.from, to: thisY.to });
+    if (prevY) out.push({ key: "prevYear", labelKey: "ui.rangePrevYear", from: prevY.from, to: prevY.to });
+    out.push({ key: "all", labelKey: "ui.rangeAll", from: first, to: last });
+    return out;
+  }
+  const pKey = (y, mo) => y * 12 + mo;
+  const pFromKey = (v) => ({ y: Math.floor((v - 1) / 12), mo: ((v - 1) % 12) + 1 });
+
+  function rangeFilterBlock() {
+    const flat = allPeriods();
+    if (!flat.length) return "";
+    const presets = rangePresets(flat);
+    const r = state.range;
+    const curKey = presets.find((p) => p.from.y === r.fromY && p.from.mo === r.fromM
+      && p.to.y === r.toY && p.to.mo === r.toM);
+    const optHtml = flat.map((p) => `<option value="${pKey(p.y, p.mo)}">${periodLabel(p.y, p.mo)}</option>`).join("");
+    return `<div class="filter-group">
+        <label data-i18n="ui.period">${t("ui.period")}</label>
+        <div class="filter-regions">${presets.map((p) =>
+          `<button type="button" data-preset="${p.key}" class="${curKey && curKey.key === p.key ? "on" : ""}" data-i18n="${p.labelKey}">${t(p.labelKey)}</button>`).join("")}</div>
+      </div>
+      <div class="filter-group">
+        <label data-i18n="ui.customRange">${t("ui.customRange")}</label>
+        <div class="filter-range-row">
+          <select class="filter-select filter-select-sm" id="rangeFrom" aria-label="${t("ui.rangeFrom")}">${optHtml}</select>
+          <select class="filter-select filter-select-sm" id="rangeTo" aria-label="${t("ui.rangeTo")}">${optHtml}</select>
+        </div>
+      </div>`;
+  }
+
   function renderFilters() {
     const box = document.getElementById("catFilters");
     if (!box) return;
@@ -386,16 +493,20 @@
     const want = cfg.filters || (cfg.yearsOnly ? ["years"] : ["years", "months"]);
     let h = `<div class="filter-head">${icon(cfg.ic)} <span data-i18n="ui.filter">${t("ui.filter")}</span></div>`;
 
-    // Yıl Çoklu Seçim Dropdown'ı
-    const selYears = new Set(state.years);
-    const yearItems = years.map((y) => ({ v: y, l: String(y) }));
-    h += ddBlock("years", "ui.year", yearsSummary(), yearItems, selYears);
+    if (want.includes("range")) {
+      h += rangeFilterBlock();
+    } else {
+      // Yıl Çoklu Seçim Dropdown'ı
+      const selYears = new Set(state.years);
+      const yearItems = years.map((y) => ({ v: y, l: String(y) }));
+      h += ddBlock("years", "ui.year", yearsSummary(), yearItems, selYears);
 
-    // Ay Çoklu Seçim Dropdown'ı
-    if (want.includes("months") && avail.length) {
-      const selMonths = new Set(state.months);
-      const monthItems = avail.map((mo) => ({ v: mo, l: MON()[mo - 1] }));
-      h += ddBlock("months", "ui.month", monthsLabel(avail), monthItems, selMonths);
+      // Ay Çoklu Seçim Dropdown'ı
+      if (want.includes("months") && avail.length) {
+        const selMonths = new Set(state.months);
+        const monthItems = avail.map((mo) => ({ v: mo, l: MON()[mo - 1] }));
+        h += ddBlock("months", "ui.month", monthsLabel(avail), monthItems, selMonths);
+      }
     }
 
     if (want.includes("bogaz")) h += btnGroup("bogaz", "ui.strait", FILTER_OPTS.bogaz, state.bogaz || "istanbul");
@@ -408,6 +519,32 @@
 
     h += `<a class="btn btn-ghost filter-src" href="dosyalar.html?kat=${cfg.arch}"><span data-i18n="ui.viewFiles">${t("ui.viewFiles")}</span> ${arrow("right")}</a>`;
     box.innerHTML = h;
+
+    // Dönem aralığı olayları (preset düğmeleri + özel başlangıç/bitiş)
+    if (want.includes("range") && state.range) {
+      const r = state.range;
+      box.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", () => {
+        const p = rangePresets(allPeriods()).find((x) => x.key === b.dataset.preset);
+        if (!p) return;
+        applyRange(p.from.y, p.from.mo, p.to.y, p.to.mo);
+        renderFilters(); renderDash();
+      }));
+      const rf = box.querySelector("#rangeFrom"), rt = box.querySelector("#rangeTo");
+      if (rf && rt) {
+        rf.value = String(pKey(r.fromY, r.fromM));
+        rt.value = String(pKey(r.toY, r.toM));
+        const onChange = (moved) => {
+          let fv = +rf.value, tv = +rt.value;
+          // Başlangıç bitişi geçtiyse diğer ucu iterek geçerli bir aralık korunur
+          if (fv > tv) { if (moved === "from") tv = fv; else fv = tv; rf.value = String(fv); rt.value = String(tv); }
+          const a = pFromKey(fv), b = pFromKey(tv);
+          applyRange(a.y, a.mo, b.y, b.mo);
+          renderFilters(); renderDash();
+        };
+        rf.addEventListener("change", () => onChange("from"));
+        rt.addEventListener("change", () => onChange("to"));
+      }
+    }
 
     // Yıl Dropdown Olayları
     const ddY = box.querySelector('.filter-dd[data-dd="years"]');
@@ -591,9 +728,11 @@
   /* ---------- Dashboard: bildirimli KPI panosu (cfg.cards/cfg.charts — gemi, yük, …) ---------- */
   function renderDashQuad(box) {
     const avail = curAvail(), unit = t(cfg.unit);
-    const partial = avail.length && state.months.length < avail.length;
+    const partial = !state.range && avail.length && state.months.length < avail.length;
     const ysum = yearsSummary();
-    const monthsTxt = compressMonths(state.months);
+    // Aralık modunda dönem etiketi (ysum) zaten tam pencereyi anlatıyor — ayrı bir ay
+    // listesi tekrar etmesin diye alt satır boş bırakılır.
+    const monthsTxt = state.range ? "" : compressMonths(state.months);
     const subCounts = `${monthsTxt ? monthsTxt : ""}${partial ? " · " + t("ui.partial") : ""}`;
     const subYearly = `<span data-i18n="ui.yearlyTotal">${t("ui.yearlyTotal")}</span>`;
 
@@ -611,7 +750,7 @@
       </div>`;
     }).join("");
 
-    const capped = state.years.length > 10;
+    const capped = !state.range && state.years.length > 10;
     const capNote = capped ? (lang() === "en" ? " · showing most recent 10 years" : " · en güncel 10 yıl gösteriliyor") : "";
 
     const chartsHtml = cfg.charts.map((ch, idx) => {
@@ -693,6 +832,17 @@
   }
   function monthEdit(avail, seriKey, seriName) {
     return monthEditForYear(avail, seriKey, seriName, state.years[0]);
+  }
+  // monthEditForYear'ın periods listesi sürümü — aralık modunda her nokta farklı yıla
+  // ait olabildiği için tek bir y'ye sabitlenemez, periods[i]'den okunur.
+  function periodEdit(periods, seriKey, seriName) {
+    return (i) => {
+      const p = periods[i];
+      if (!p) return null;
+      const l = `${MON()[p.mo - 1]} ${p.y} · ${seriName}`;
+      return { t: "fact_monthly", m: { kategori: cat, yil: p.y, ay: p.mo, seri: seriKey },
+               f: "deger", l, k: "num" };
+    };
   }
   const RENAME_WARN = "Bu ad, aynı satırın kimliği. Değiştirirsen yalnız bu yılın kaydı yeniden adlandırılır; diğer yıllar eski adla kalır ve grafikte ayrı görünür.";
 
@@ -790,10 +940,12 @@
       };
     }
     if (cd.type === "topMonth") {
-      // En yoğun ay — seçili yılların o ayki toplamları (ay filtresinden bağımsız, topPort/topHat ile tutarlı)
+      // En yoğun ay — seçili dönemdeki o takvim ayının toplamı (yalnız gerçekten
+      // seçili olan (yıl, ay) çiftlerinden — aralık modunda kısmi yılları da doğru sayar).
       const seri = seriFor(cd.seri);
-      const avail = curAvail();
-      const totals = avail.map((mo) => ({ mo, deger: state.years.reduce((s, y) => s + mVal(y, mo, seri), 0) }));
+      const byMo = {};
+      selPeriods().forEach(({ y, mo }) => { byMo[mo] = (byMo[mo] || 0) + mVal(y, mo, seri); });
+      const totals = Object.keys(byMo).map((mo) => ({ mo: +mo, deger: byMo[mo] }));
       const top = totals.sort((a, b) => b.deger - a.deger)[0];
       if (!top || !top.deger) return { year: ysum, valueHtml: "—", note: "", yearly: true };
       const hv = U.human(top.deger);
@@ -838,9 +990,29 @@
   // okunabilirlik için en yeni 10 yılla sınırlı). cfg.quad olmayan sayfalarda state.years
   // hep 1 elemanlı olduğu için ikinci dal hiç çalışmaz, davranış değişmez.
   function drawMonthlyChart(host) {
-    const avail = curAvail(), unit = t(cfg.unit);
-    if (!avail.length) return;
+    const unit = t(cfg.unit);
     const cs = getComputedStyle(document.documentElement);
+    if (state.range) {
+      // Aralık modu: takvim yılı sınırını görmezden gelen TEK kronolojik çizgi seti —
+      // "yıl başına ayrı çizgi" karşılaştırması yerine gerçek zaman ekseni (örn.
+      // Tem'25 → Nis'26 tek çizgi). Ay filtresi kartezyen olmadığı için periods
+      // doğrudan çizilecek nokta listesidir.
+      const periods = state.periods || [];
+      // lineArea tek noktayla (xs.length-1 === 0) bölme hatası verir — en az 2 ay gerekir.
+      if (periods.length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoMonths">${t("ui.needTwoMonths")}</p>`; return; }
+      const labels = thinLabels(periods.map((p) => periodLabel(p.y, p.mo)), 14);
+      const ramp = [accent, cs.getPropertyValue("--sea-600").trim(), cs.getPropertyValue("--sky-300").trim()];
+      const series = cfg.series.length
+        ? cfg.series.map((s, i) => ({ name: nm(s), color: ramp[i % ramp.length],
+            values: periods.map((p) => mVal(p.y, p.mo, s.k)),
+            edit: periodEdit(periods, s.k, nm(s)) }))
+        : [{ name: t("ui.total"), color: accent, values: periods.map((p) => mVal(p.y, p.mo, "toplam")),
+            edit: periodEdit(periods, "toplam", t("ui.total")) }];
+      C.lineArea(host, { labels, unit, series });
+      return;
+    }
+    const avail = curAvail();
+    if (!avail.length) return;
     if (state.years.length > 1) {
       const palette = ["--c-yuk", "--c-konteyner", "--c-gemi", "--c-kruvaziyer", "--c-roro", "--c-bogaz"]
         .map((v) => cs.getPropertyValue(v).trim());
@@ -1244,15 +1416,24 @@
 
   function paint() {
     const span = cfg.defaultYearSpan || 1;
+    const rangeMode = cfg.filters && cfg.filters.includes("range");
     computeYears();
     if (!state) {
-      state = { years: years.slice(0, Math.min(span, years.length)), months: [], seri: "toplam",
-        region: "all", tip: "tumu", bayrak: "toplam" };
-      state.months = curAvail();
+      if (rangeMode) {
+        state = { seri: "toplam", region: "all", tip: "tumu", bayrak: "toplam" };
+        resetToDefaultRange();
+      } else {
+        state = { years: years.slice(0, Math.min(span, years.length)), months: [], seri: "toplam",
+          region: "all", tip: "tumu", bayrak: "toplam" };
+        state.months = curAvail();
+      }
     } else if (!state.years.length || !state.years.some((y) => years.includes(y))) {
-      // Yedek veriyle çizilmişken canlı veri gelirse seçili yıllar geçersiz kalabilir
-      state.years = years.slice(0, Math.min(span, years.length));
-      state.months = curAvail();
+      // Yedek veriyle çizilmişken canlı veri gelirse seçili yıllar/dönem geçersiz kalabilir
+      if (rangeMode) resetToDefaultRange();
+      else {
+        state.years = years.slice(0, Math.min(span, years.length));
+        state.months = curAvail();
+      }
     }
     closeAllDD();
 
