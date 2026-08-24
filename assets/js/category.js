@@ -399,9 +399,13 @@
   }
 
   /* Çoklu seçim açılır listesi (yıl/ay) */
-  let ddOpen = { years: false, months: false };
+  let ddOpen = { years: false, months: false, range: false };
+  // Otel sitesi tarzı takvim: ilk tık başlangıcı işaretler, ikinci tık bitişi işaretleyip
+  // uygular ve kapanır. Bekleyen (henüz bitişi seçilmemiş) başlangıç burada tutulur.
+  let rangePicker = { viewY: null, pendingFromKey: null };
   function closeAllDD() {
-    ddOpen.years = false; ddOpen.months = false;
+    ddOpen.years = false; ddOpen.months = false; ddOpen.range = false;
+    rangePicker.pendingFromKey = null;
     document.querySelectorAll(".filter-dd-panel").forEach((p) => (p.hidden = true));
     document.querySelectorAll(".filter-dd-btn").forEach((b) => b.setAttribute("aria-expanded", "false"));
   }
@@ -440,50 +444,96 @@
     </div>`;
   }
 
-  // Dönem hızlı seçenekleri — veri setindeki gerçek en eski/en yeni aya göre türetilir
-  // (sabit tarih yok, veri büyüdükçe otomatik kayar). "Bu Yıl"/"Geçen Yıl" o yılın
-  // veride bulunan ilk-son ayını kullanır (2026 gibi yıl-içi eksik yıllarda da doğru).
-  function rangePresets(flat) {
-    if (!flat.length) return [];
-    const last = flat[flat.length - 1], first = flat[0];
-    const slice = (n) => flat[Math.max(0, flat.length - n)];
-    const yearBounds = (y) => {
-      const ys = flat.filter((p) => p.y === y);
-      return ys.length ? { from: ys[0], to: ys[ys.length - 1] } : null;
-    };
-    const thisY = yearBounds(last.y), prevY = yearBounds(last.y - 1);
-    const out = [
-      { key: "last12", labelKey: "ui.rangeLast12", from: slice(12), to: last },
-      { key: "last24", labelKey: "ui.rangeLast24", from: slice(24), to: last },
-    ];
-    if (thisY) out.push({ key: "thisYear", labelKey: "ui.rangeThisYear", from: thisY.from, to: thisY.to });
-    if (prevY) out.push({ key: "prevYear", labelKey: "ui.rangePrevYear", from: prevY.from, to: prevY.to });
-    out.push({ key: "all", labelKey: "ui.rangeAll", from: first, to: last });
-    return out;
-  }
   const pKey = (y, mo) => y * 12 + mo;
   const pFromKey = (v) => ({ y: Math.floor((v - 1) / 12), mo: ((v - 1) % 12) + 1 });
 
+  /* Otel rezervasyonu tarzı ay takvimi: tek bir "Tem '25 – Nis '26" düğmesi, açılınca
+     yıl gezinmeli 12 aylık ızgara. İlk tık başlangıcı işaretler, ikinci tık bitişi
+     işaretleyip uygular — ikisi arasında yıl değiştirilebildiği için takvim yılı
+     sınırını aşan aralıklar (Tem'25 → Nis'26) doğal biçimde seçilebilir. */
   function rangeFilterBlock() {
     const flat = allPeriods();
     if (!flat.length) return "";
-    const presets = rangePresets(flat);
+    const firstY = flat[0].y, lastY = flat[flat.length - 1].y;
+    const availSet = new Set(flat.map((p) => pKey(p.y, p.mo)));
     const r = state.range;
-    const curKey = presets.find((p) => p.from.y === r.fromY && p.from.mo === r.fromM
-      && p.to.y === r.toY && p.to.mo === r.toM);
-    const optHtml = flat.map((p) => `<option value="${pKey(p.y, p.mo)}">${periodLabel(p.y, p.mo)}</option>`).join("");
+    if (rangePicker.viewY == null) rangePicker.viewY = r ? r.fromY : lastY;
+    const viewY = Math.min(lastY, Math.max(firstY, rangePicker.viewY));
+    const pend = rangePicker.pendingFromKey;
+    // Boyama sınırları: bitiş beklenirken yalnız başlangıç işaretli kalır
+    const selA = pend != null ? pend : (r ? pKey(r.fromY, r.fromM) : null);
+    const selB = pend != null ? null : (r ? pKey(r.toY, r.toM) : null);
+    const isOpen = ddOpen.range;
+
+    const cells = Array.from({ length: 12 }, (_, i) => {
+      const mo = i + 1, k = pKey(viewY, mo);
+      const has = availSet.has(k);
+      const cls = [];
+      if (k === selA || k === selB) cls.push("on");
+      else if (selA != null && selB != null && k > selA && k < selB) cls.push("in");
+      return `<button type="button" class="rc-cell${cls.length ? " " + cls.join(" ") : ""}"
+        data-k="${k}" ${has ? "" : "disabled"}>${MON()[i]}</button>`;
+    }).join("");
+
+    const hintKey = pend != null ? "ui.pickEnd" : "ui.pickStart";
     return `<div class="filter-group">
-        <label data-i18n="ui.period">${t("ui.period")}</label>
-        <div class="filter-regions">${presets.map((p) =>
-          `<button type="button" data-preset="${p.key}" class="${curKey && curKey.key === p.key ? "on" : ""}" data-i18n="${p.labelKey}">${t(p.labelKey)}</button>`).join("")}</div>
-      </div>
-      <div class="filter-group">
-        <label data-i18n="ui.customRange">${t("ui.customRange")}</label>
-        <div class="filter-range-row">
-          <select class="filter-select filter-select-sm" id="rangeFrom" aria-label="${t("ui.rangeFrom")}">${optHtml}</select>
-          <select class="filter-select filter-select-sm" id="rangeTo" aria-label="${t("ui.rangeTo")}">${optHtml}</select>
+      <label data-i18n="ui.dateRange">${t("ui.dateRange")}</label>
+      <div class="filter-dd" data-dd="range">
+        <button type="button" class="filter-dd-btn" aria-haspopup="true" aria-expanded="${isOpen}">
+          <span>${r ? periodRangeLabel(r) : "—"}</span>
+          <span class="dd-chev">▼</span>
+        </button>
+        <div class="filter-dd-panel range-cal" ${isOpen ? "" : "hidden"}>
+          <div class="rc-head">
+            <button type="button" class="rc-nav" data-nav="-1" ${viewY <= firstY ? "disabled" : ""} aria-label="${t("ui.prevYear")}">‹</button>
+            <span class="rc-year">${viewY}</span>
+            <button type="button" class="rc-nav" data-nav="1" ${viewY >= lastY ? "disabled" : ""} aria-label="${t("ui.nextYear")}">›</button>
+          </div>
+          <div class="rc-grid">${cells}</div>
+          <p class="rc-hint" data-i18n="${hintKey}">${t(hintKey)}</p>
         </div>
-      </div>`;
+      </div>
+    </div>`;
+  }
+
+  function wireRangeCal(box) {
+    const dd = box.querySelector('.filter-dd[data-dd="range"]');
+    if (!dd) return;
+    const btn = dd.querySelector(".filter-dd-btn");
+    const panel = dd.querySelector(".filter-dd-panel");
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const next = !ddOpen.range;
+      closeAllDD();
+      ddOpen.range = next;
+      // Panel her açılışta seçili aralığın başlangıç yılından başlasın
+      if (next && state.range) rangePicker.viewY = state.range.fromY;
+      panel.hidden = !next;
+      btn.setAttribute("aria-expanded", String(next));
+      if (next) renderFilters();
+    });
+    panel.addEventListener("click", (e) => e.stopPropagation());
+
+    panel.querySelectorAll(".rc-nav").forEach((b) => b.addEventListener("click", () => {
+      rangePicker.viewY = (rangePicker.viewY || 0) + (+b.dataset.nav);
+      renderFilters(); // panel açık kalır (ddOpen.range hâlâ true)
+    }));
+
+    panel.querySelectorAll(".rc-cell:not([disabled])").forEach((c) => c.addEventListener("click", () => {
+      const k = +c.dataset.k;
+      if (rangePicker.pendingFromKey == null) {
+        rangePicker.pendingFromKey = k;
+        renderFilters();
+        return;
+      }
+      // İkinci tık geriye düşerse aralık ters çevrilir (kullanıcıyı çıkmaza sokmamak için)
+      const a = Math.min(rangePicker.pendingFromKey, k), b = Math.max(rangePicker.pendingFromKey, k);
+      rangePicker.pendingFromKey = null;
+      ddOpen.range = false;
+      const p1 = pFromKey(a), p2 = pFromKey(b);
+      applyRange(p1.y, p1.mo, p2.y, p2.mo);
+      renderFilters(); renderDash();
+    }));
   }
 
   function renderFilters() {
@@ -520,31 +570,7 @@
     h += `<a class="btn btn-ghost filter-src" href="dosyalar.html?kat=${cfg.arch}"><span data-i18n="ui.viewFiles">${t("ui.viewFiles")}</span> ${arrow("right")}</a>`;
     box.innerHTML = h;
 
-    // Dönem aralığı olayları (preset düğmeleri + özel başlangıç/bitiş)
-    if (want.includes("range") && state.range) {
-      const r = state.range;
-      box.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", () => {
-        const p = rangePresets(allPeriods()).find((x) => x.key === b.dataset.preset);
-        if (!p) return;
-        applyRange(p.from.y, p.from.mo, p.to.y, p.to.mo);
-        renderFilters(); renderDash();
-      }));
-      const rf = box.querySelector("#rangeFrom"), rt = box.querySelector("#rangeTo");
-      if (rf && rt) {
-        rf.value = String(pKey(r.fromY, r.fromM));
-        rt.value = String(pKey(r.toY, r.toM));
-        const onChange = (moved) => {
-          let fv = +rf.value, tv = +rt.value;
-          // Başlangıç bitişi geçtiyse diğer ucu iterek geçerli bir aralık korunur
-          if (fv > tv) { if (moved === "from") tv = fv; else fv = tv; rf.value = String(fv); rt.value = String(tv); }
-          const a = pFromKey(fv), b = pFromKey(tv);
-          applyRange(a.y, a.mo, b.y, b.mo);
-          renderFilters(); renderDash();
-        };
-        rf.addEventListener("change", () => onChange("from"));
-        rt.addEventListener("change", () => onChange("to"));
-      }
-    }
+    if (want.includes("range")) wireRangeCal(box);
 
     // Yıl Dropdown Olayları
     const ddY = box.querySelector('.filter-dd[data-dd="years"]');

@@ -969,9 +969,27 @@ body.cat-quad .cat-filters { position: static; top: auto; }
   background: var(--bg-alt); border: 1px solid var(--border); color: var(--text); cursor: pointer;
 }
 .filter-select:focus { outline: none; border-color: var(--accent); }
-/* Dönem aralığı: iki küçük select yan yana (kruvaziyer) */
-.filter-range-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.filter-select-sm { padding: 7px 8px; font-size: 0.78rem; border-radius: 8px; }
+/* Ay takvimi (otel rezervasyonu tarzı aralık seçici — kruvaziyer) */
+.range-cal { max-height: none; gap: 10px; }
+.rc-head { display: flex; align-items: center; justify-content: space-between; }
+.rc-year { font-weight: 800; font-size: 0.92rem; color: var(--white); }
+.rc-nav {
+  width: 26px; height: 26px; border-radius: 7px; line-height: 1; font-size: 1rem; font-weight: 700;
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--text); cursor: pointer;
+}
+.rc-nav:hover:not([disabled]) { border-color: var(--accent); color: var(--white); }
+.rc-nav[disabled] { opacity: 0.35; cursor: default; }
+.rc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.rc-cell {
+  padding: 7px 2px; border-radius: 7px; font-size: 0.78rem; font-weight: 700;
+  background: var(--surface-2); border: 1px solid transparent; color: var(--text-soft);
+  cursor: pointer; transition: 0.15s;
+}
+.rc-cell:hover:not([disabled]) { border-color: var(--accent); color: var(--white); }
+.rc-cell[disabled] { opacity: 0.28; cursor: default; }
+.rc-cell.in { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--white); }
+.rc-cell.on { background: var(--accent); color: #fff; }
+.rc-hint { margin: 0; font-size: 0.72rem; color: var(--text-dim); text-align: center; }
 .filter-group label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .filter-actions { display: inline-flex; gap: 6px; }
 .filter-actions button {
