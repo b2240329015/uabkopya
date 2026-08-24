@@ -28,6 +28,7 @@
       trendKey: "yuk_ton",
       series: [{ k: "yukleme", key: "series.yukleme" }, { k: "bosaltma", key: "series.bosaltma" }],
       quad: true, defaultYearSpan: 1,
+      filters: ["range"],
       cards: [
         { type: "sum", seri: "toplam", labelKey: "yuk.kpiTotal", unitKey: "unit.ton" },
         { type: "topCountry", seri: "toplam", labelKey: "yuk.kpiTopCountry", unitKey: "unit.ton" },
@@ -45,7 +46,7 @@
       series: [{ k: "yukleme", key: "series.yukleme" }, { k: "bosaltma", key: "series.bosaltma" }],
       quad: true, defaultYearSpan: 2,
       composed: true, yearMin: 2020,
-      filters: ["years", "months", "seri", "bayrak", "tip", "region"],
+      filters: ["range", "seri", "bayrak", "tip", "region"],
       cards: [
         { type: "sum", labelKey: "konteyner.kpiTotal", unitKey: "unit.teu" },
         { type: "topPort", labelKey: "konteyner.kpiTopPort", unitKey: "unit.teu" },
@@ -63,6 +64,7 @@
       trendKey: "gemi_gros_ton",
       quad: true,
       defaultYearSpan: 2,
+      filters: ["range"],
       cards: [
         { type: "sum", seri: "turk", labelKey: "gemi.kpiTurk", unitKey: "unit.gemi" },
         { type: "sum", seri: "yabanci", labelKey: "gemi.kpiYabanci", unitKey: "unit.gemi" },
@@ -102,6 +104,7 @@
       trendKey: "roro_arac_yil",
       series: [{ k: "gelen", key: "series.gelenArac" }, { k: "giden", key: "series.gidenArac" }],
       quad: true, defaultYearSpan: 1,
+      filters: ["range"],
       cards: [
         { type: "sum", seri: "toplam", labelKey: "roro.kpiTotal", unitKey: "unit.arac" },
         { type: "topType", labelKey: "roro.kpiTopType" },
@@ -117,7 +120,7 @@
       ic: "bogaz", accent: "--c-bogaz", unit: "unit.gecis", headKey: "bogaz_gecis", arch: "bogazlar",
       trendKey: null, series: [],
       quad: true, defaultYearSpan: 1,
-      filters: ["years", "months", "bogaz"],
+      filters: ["range", "bogaz"],
       cards: [
         { type: "sum", seri: "toplam", labelKey: "bogazlar.kpiGemi", unitKey: "unit.gemi" },
         { type: "sum", seri: "gros_ton", labelKey: "bogazlar.kpiGrossTon", unitKey: "unit.grosston" },
@@ -338,9 +341,14 @@
     return runs.map(([a, b]) => (a === b ? MON()[a - 1] : `${MON()[a - 1]}-${MON()[b - 1]}`)).join(", ");
   }
   // Seçili yılların her biri için seçili ayların toplamı (küçükten büyüğe) — gemi Türk/Yabancı trend grafiği.
+  // Seçili dönemin (legacy veya aralık) her yılı için o yıla düşen ayların toplamı —
+  // selPeriods() kullandığı için iki modda da doğru: legacy'de her yıl aynı ayları,
+  // aralık modunda yılın gerçekte kapsanan aylarını toplar.
   function yearlySeriesFor(seri) {
-    const ys = [...state.years].sort((a, b) => a - b);
-    return { labels: ys.map(String), values: ys.map((y) => state.months.reduce((s, mo) => s + mVal(y, mo, seri), 0)) };
+    const byYear = {};
+    selPeriods().forEach(({ y, mo }) => { byYear[y] = (byYear[y] || 0) + mVal(y, mo, seri); });
+    const ys = Object.keys(byYear).map(Number).sort((a, b) => a - b);
+    return { labels: ys.map(String), values: ys.map((y) => byYear[y]) };
   }
   function yearsSummary() {
     if (state.range) return periodRangeLabel(state.range);
@@ -870,6 +878,18 @@
                f: "deger", l, k: "num" };
     };
   }
+  // Aralık modu grafikleri (dMonth, tankerLine, monthlySeries) için ortak: state.periods'u
+  // TEK kronolojik çizgi setine çevirir — "yıl başına ayrı çizgi" yerine gerçek zaman ekseni.
+  function rangeLineSeries(seriDefs) {
+    const periods = state.periods || [];
+    const labels = thinLabels(periods.map((p) => periodLabel(p.y, p.mo)), 14);
+    const series = seriDefs.map((sd) => ({
+      name: sd.name, color: sd.color,
+      values: periods.map((p) => mVal(p.y, p.mo, sd.k)),
+      edit: periodEdit(periods, sd.k, sd.name),
+    }));
+    return { labels, series };
+  }
   const RENAME_WARN = "Bu ad, aynı satırın kimliği. Değiştirirsen yalnız bu yılın kaydı yeniden adlandırılır; diğer yıllar eski adla kalır ve grafikte ayrı görünür.";
 
   function bdEdit(r) {
@@ -1021,19 +1041,14 @@
     if (state.range) {
       // Aralık modu: takvim yılı sınırını görmezden gelen TEK kronolojik çizgi seti —
       // "yıl başına ayrı çizgi" karşılaştırması yerine gerçek zaman ekseni (örn.
-      // Tem'25 → Nis'26 tek çizgi). Ay filtresi kartezyen olmadığı için periods
-      // doğrudan çizilecek nokta listesidir.
-      const periods = state.periods || [];
+      // Tem'25 → Nis'26 tek çizgi).
       // lineArea tek noktayla (xs.length-1 === 0) bölme hatası verir — en az 2 ay gerekir.
-      if (periods.length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoMonths">${t("ui.needTwoMonths")}</p>`; return; }
-      const labels = thinLabels(periods.map((p) => periodLabel(p.y, p.mo)), 14);
+      if ((state.periods || []).length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoMonths">${t("ui.needTwoMonths")}</p>`; return; }
       const ramp = [accent, cs.getPropertyValue("--sea-600").trim(), cs.getPropertyValue("--sky-300").trim()];
-      const series = cfg.series.length
-        ? cfg.series.map((s, i) => ({ name: nm(s), color: ramp[i % ramp.length],
-            values: periods.map((p) => mVal(p.y, p.mo, s.k)),
-            edit: periodEdit(periods, s.k, nm(s)) }))
-        : [{ name: t("ui.total"), color: accent, values: periods.map((p) => mVal(p.y, p.mo, "toplam")),
-            edit: periodEdit(periods, "toplam", t("ui.total")) }];
+      const seriDefs = cfg.series.length
+        ? cfg.series.map((s, i) => ({ k: s.k, name: nm(s), color: ramp[i % ramp.length] }))
+        : [{ k: "toplam", name: t("ui.total"), color: accent }];
+      const { labels, series } = rangeLineSeries(seriDefs);
       C.lineArea(host, { labels, unit, series });
       return;
     }
@@ -1156,7 +1171,14 @@
       } else if (ch.type === "monthlySeries") {
         // Tek seri, ay bazında — tek yıl seçiliyse sütun, çoklu yılda yıl başına ayrı çizgi
         // (drawMonthlyChart'ın "toplam" özel-hâline benzer, ancak seri cfg.charts'tan gelir).
-        const avail = curAvail(), unit = t(ch.unitKey || cfg.unit), seri = ch.seri;
+        const unit = t(ch.unitKey || cfg.unit), seri = ch.seri;
+        if (state.range) {
+          if ((state.periods || []).length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoMonths">${t("ui.needTwoMonths")}</p>`; return; }
+          const { labels, series } = rangeLineSeries([{ k: seri, name: t(ch.titleKey), color: accent }]);
+          C.lineArea(host, { labels, unit, series });
+          return;
+        }
+        const avail = curAvail();
         if (!avail.length) { host.innerHTML = `<p class="csub">—</p>`; return; }
         const labels = avail.map((x) => MON()[x - 1]);
         if (state.years.length > 1) {
@@ -1178,18 +1200,26 @@
           }] });
         }
       } else if (ch.type === "tankerLine") {
-        // TTA/LPG/TCH — üç sabit seri, her zaman çizgi grafik; çoklu yıl seçiliyse aylar
-        // bazında seçili yılların toplamı (liman/ülke grafikleriyle aynı toplama mantığı).
-        const avail = curAvail(), unit = t(ch.unitKey || cfg.unit);
+        // TTA/LPG/TCH — üç sabit seri, her zaman çizgi grafik.
+        const unit = t(ch.unitKey || cfg.unit);
+        const TANKER_DEFS = [
+          { k: "tanker_tta", name: "TTA", color: accent },
+          { k: "tanker_lpg", name: "LPG", color: accent2 },
+          { k: "tanker_tch", name: "TCH", color: cs.getPropertyValue("--sky-300").trim() },
+        ];
+        if (state.range) {
+          if ((state.periods || []).length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoMonths">${t("ui.needTwoMonths")}</p>`; return; }
+          const { labels, series } = rangeLineSeries(TANKER_DEFS);
+          C.lineArea(host, { labels, unit, series });
+          return;
+        }
+        // Çoklu yıl seçiliyse aylar bazında seçili yılların toplamı (liman/ülke
+        // grafikleriyle aynı toplama mantığı).
+        const avail = curAvail();
         if (!avail.length) { host.innerHTML = `<p class="csub">—</p>`; return; }
         const labels = avail.map((x) => MON()[x - 1]);
         const singleYear = state.years.length === 1 ? state.years[0] : null;
-        const TANKERS = [
-          ["tanker_tta", "TTA", accent],
-          ["tanker_lpg", "LPG", accent2],
-          ["tanker_tch", "TCH", cs.getPropertyValue("--sky-300").trim()],
-        ];
-        const series = TANKERS.map(([seri, name, color]) => ({
+        const series = TANKER_DEFS.map(({ k: seri, name, color }) => ({
           name, color,
           values: avail.map((mo) => state.years.reduce((s, y) => s + mVal(y, mo, seri), 0)),
           edit: singleYear != null ? monthEditForYear(avail, seri, name, singleYear) : null,
