@@ -1175,9 +1175,7 @@
         }];
         C.lineArea(host, { labels: allYearsYil.map(String), unit: t(cfg.unit), series: totalSeries, straight: true });
       } else if (ch.type === "treemap") {
-        const cs2 = getComputedStyle(document.documentElement);
-        const palette = ["--c-yuk", "--c-konteyner", "--c-gemi", "--c-kruvaziyer", "--c-roro", "--c-bogaz", "--c-kabotaj", "--c-filo"]
-          .map((v) => cs2.getPropertyValue(v).trim());
+        const palette = ["#0284c7", "#0369a1", "#075985", "#0c4a6e", "#1e3a8a", "#1e40af", "#1d4ed8"];
         const groups = new Map();
         const singleYear = state.years.length === 1 ? state.years[0] : null;
         const items = aggBreakdown(ch.dim, "toplam").map((r) => {
@@ -1376,7 +1374,10 @@
   }
 
   function short(s) {
-    let str = String(s).replace(/ve yarı römorklar/gi, "");
+    let str = String(s);
+    if (str.indexOf("mork") > -1) {
+      return lang() === "en" ? "Trailers" : "Römorklar";
+    }
     const p = str.split("/");
     const v = lang() === "en" && p[1] ? p[1] : p[0];
     return v.replace(/^[\s\--]+/, "").trim().slice(0, 26);

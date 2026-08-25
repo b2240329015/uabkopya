@@ -1,0 +1,58 @@
+-Çekici-Satış Amaçlı / Tow truck-for sale
+-Kamyon-Taşıma Amaçlı (Dolu) / Lorry-for transport (Loaded)
+Traktör / Tractor
+-Tır Tankeri-Taşıma Amaçlı (Dolu) / Truck tanker-for transport (Loaded)
+Kamyon / Lorry
+Vinçli Taşıtlar (Kurtarıcılar vb.) / Crane vehicles (Rescuers, etc.)
+-Otobüs-Taşıma Amaçlı (Boş) / Bus-for transport (Empty)
+Jeep / Jeep
+Karavan / Caravan
+-Kamyon Tankeri-Taşıma Amaçlı (Boş) / Tanker trucks--for transport (Empty)
+Kamyon Tankeri / Tanker trucks
+-Vinçli Taşıtlar (Kurtarıcılar vb.)-Satış Amaçlı /             Crane vehicles (R
+-Treyler-Taşıma Amaçlı (Boş) / Trailer-for transport (Empty)
+-Kamyon Tankeri-Taşıma Amaçlı (Boş) / Tanker trucks-for transport (Empty)
+-Kamyonet-Taşıma Amaçlı (Boş) / Light truck-for transport (Empty)
+Minibüs / Van
+-Treyler-Konteyner Taşıma Amaçlı (Boş) / Trailer-for container transport (Empty)
+-Otomobil-Satış Amaçlı / Car-for sale
+Treyler / Trailer
+-Tır Tankeri-Taşıma Amaçlı (Boş) / Truck tanker-for transport (Empty)
+Otomobil / Car
+-Çekici-Taşıma Amaçlı / Tow truck-for transport
+-Jeep-Taşıma Amaçlı / Jeep-for transport
+-Treyler-Taşıma Amaçlı (Dolu) / Trailer-for transport (Loaded)
+Kar taşıtları; golf arabaları ve benzeri taşıtlar (motorlu) /  Vehicles for trav
+-Tır Tankeri-Satış Amaçlı / Truck tanker-for sale
+-Karavan-Taşıma Amaçlı / Caravan-for transport
+Başka Yerde Sınıflandırılmamış Diğer Ulaşım Araçları /  Other transport equipmen
+-Karavan-Satış Amaçlı / Caravan-for sale
+Kamyonet / Light truck
+-Minibüs-Satış Amaçlı / Van-for sale
+-Otobüs-Taşıma Amaçlı (Dolu) / Bus-for transport (Loaded)
+-Kamyon Tankeri-Satış Amaçlı / Tanker trucks-for sale
+-Otomobil-Taşıma Amaçlı / Car-for transport
+-Minibüs-Taşıma Amaçlı (Boş) / Van-for transport (Empty)
+Tır / Truck
+-Tır-Satış Amaçlı / Truck-for sale
+-Vinçli Taşıtlar (Kurtarıcılar vb.)-Kullanım Amaçlı /             Crane vehicles
+-Kamyon-Satış Amaçlı / Lorry-for sale
+Motorsiklet / Motorcycles
+Biçer Döver / Harvester
+-Kamyonet-Taşıma Amaçlı (Dolu) / Light truck-for transport (Loaded)
+-Kamyon Tankeri-Taşıma Amaçlı (Dolu) / Tanker trucks--for transport (Loaded)
+Çekici / Tow Truck
+-Minibüs-Taşıma Amaçlı (Dolu) / Van-for transport (Loaded)
+Askeri Araç / Military Vehicle
+-Kamyonet-Satış Amaçlı / Light truck-for sale
+Motokültörler (Ufak Traktör) / Motoculteurs
+-Kamyon-Taşıma Amaçlı (Boş) / Lorry-for transport (Empty)
+-Otobüs-Satış Amaçlı / Bus-for sale
+-Tır-Taşıma Amaçlı (Boş) / Truck-for transport (Empty)
+-Treyler-Satış Amaçlı / Trailer-for sale
+-Treyler-Konteyner Taşıma Amaçlı (Dolu) / Trailer-for container transport (Loade
+Tır Tankeri / Truck tanker-for sale
+Römork ve Yarı Römorklar (Kendiliğinden yüklemeli veya boşaltmalı olsun olmasın)
+Otobüs / Bus
+-Tır-Taşıma Amaçlı (Dolu) / Truck-for transport (Loaded)
+-Kamyon Tankeri-Taşıma Amaçlı (Dolu) / Tanker trucks-for transport (Loaded)

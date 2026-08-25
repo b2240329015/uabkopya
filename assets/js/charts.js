@@ -358,15 +358,17 @@
       markEdit(rect, r.edit);
       svg.appendChild(rect);
       requestAnimationFrame(() => (rect.style.opacity = "1"));
-      if (rw0 > 44 && rh0 > 24) {
-        const maxChars = Math.max(3, Math.floor(rw0 / 6.6));
+      // Kutu çok küçükse yazıyı hiç gösterme, büyükse fontu ve uzunluğu ayarla
+      if (rw0 > 50 && rh0 > 28) {
+        const fs = Math.max(10, Math.min(14, rw0 / (r.label.length * 0.55)));
+        const maxChars = Math.max(3, Math.floor(rw0 / (fs * 0.6)));
         const short = r.label.length > maxChars ? r.label.slice(0, maxChars - 1) + "…" : r.label;
-        const txt = el("text", { x: rx0 + 8, y: ry0 + 18, "font-size": 14, "font-weight": 700, fill: "#fff" });
+        const txt = el("text", { x: rx0 + 8, y: ry0 + 14 + fs/2, "font-size": fs, "font-weight": 600, fill: "#fff" });
         txt.style.pointerEvents = "none"; txt.textContent = short;
         svg.appendChild(txt);
-        if (rh0 > 40) {
+        if (rh0 > 45) {
           const hv = window.MDUtil.human(r.value);
-          const sub = el("text", { x: rx0 + 8, y: ry0 + 36, "font-size": 12.5, fill: "rgba(255,255,255,.88)" });
+          const sub = el("text", { x: rx0 + 8, y: ry0 + 18 + fs, "font-size": 12, fill: "rgba(255,255,255,.9)" });
           sub.style.pointerEvents = "none"; sub.textContent = hv.v + (hv.u ? " " + hv.u : "");
           svg.appendChild(sub);
         }
