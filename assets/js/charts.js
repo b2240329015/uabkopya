@@ -148,8 +148,8 @@
       bar.addEventListener("mouseenter", () => {
         bar.style.opacity = "0.85";
         const rect = host.getBoundingClientRect(), sc = rect.width / W;
-        // shareTotal verilmişse (kruvaziyer): ham sayının altında pazar payı yüzdesi de gösterilir
-        const shareLine = opts.shareTotal ? `<br><span style="opacity:.75">%${((d.value / opts.shareTotal) * 100).toFixed(1).replace(".", ",")} ${window.t ? window.t("ui.marketShare") : "pazar payı"}</span>` : "";
+        // shareTotal verilmişse: ham sayının altında toplam içindeki oran (yalnız yüzde) gösterilir
+        const shareLine = opts.shareTotal ? `<br><span style="opacity:.75">%${((d.value / opts.shareTotal) * 100).toFixed(1).replace(".", ",")}</span>` : "";
         showTip(`<b>${d.label}</b><br><b>${nf.format(d.value)}</b> ${opts.unit || ""}${shareLine}`,
           rect.left + (labelW + w) * sc, rect.top + barY * sc + window.scrollY);
       });

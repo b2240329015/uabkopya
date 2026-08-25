@@ -645,6 +645,8 @@ body.cat-quad .cat-filters { position: static; top: auto; }
 .dash-card .csub { color: var(--text-dim); font-size: 0.78rem; font-weight: 600; margin-top: 2px; }
 .dash-card .chart-holder { margin-top: 8px; flex: 1; display: flex; align-items: center; justify-content: center; min-height: 210px; max-height: 230px; }
 .dash-card .chart-holder svg { max-height: 210px; width: 100%; }
+.dash-card.tall .chart-holder { min-height: 400px; max-height: 480px; }
+.dash-card.tall .chart-holder svg { max-height: 480px; width: 100%; }
 .cat-dash .insight { margin-top: 16px; }
 
 /* Alt arşiv */

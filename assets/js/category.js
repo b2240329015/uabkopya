@@ -114,7 +114,7 @@
         { id: "dMonth", type: "monthly", titleKey: "cat.monthTitle", wide: true },
         { id: "dCins", type: "cinsBars", dim: "arac_cinsi", titleKey: "dim.roro.bars" },
         { id: "dCinsYil", type: "cinsYearLine", dim: "arac_cinsi", titleKey: "roro.chartCinsYil" },
-        { id: "dHat", type: "cinsBars", dim: "hat", titleKey: "roro.chartHat", wide: true },
+        { id: "dHat", type: "cinsBars", dim: "hat", titleKey: "roro.chartHat", wide: true, tall: true },
       ],
     },
     bogazlar: {
@@ -365,8 +365,8 @@
     return state.months.length + "/" + avail.length + " " + t("ui.monthSelected");
   }
 
-  const dashCard = (id, title, s2, key, wide) =>
-    `<div class="dash-card${wide ? " wide" : ""}"><h3${key ? ` data-i18n="${key}"` : ""}>${title}</h3>${s2 ? `<p class="csub">${s2}</p>` : ""}<div class="chart-holder" id="${id}"></div></div>`;
+  const dashCard = (id, title, s2, key, wide, tall) =>
+    `<div class="dash-card${wide ? " wide" : ""}${tall ? " tall" : ""}"><h3${key ? ` data-i18n="${key}"` : ""}>${title}</h3>${s2 ? `<p class="csub">${s2}</p>` : ""}<div class="chart-holder" id="${id}"></div></div>`;
 
   /* ---------- İskelet ---------- */
   function skeleton() {
@@ -794,7 +794,7 @@
       else if (ch.type === "singleSeries") s2 = `${subCounts}${capNote}`;
       else s2 = `${ysum} · ${t(ch.unitKey || cfg.unit)}`;
       const isWide = ch.wide || (ch.type === "monthly") || (ch.type === "tankerLine") || (cfg.charts.length % 2 === 1 && idx === 0);
-      return dashCard(ch.id, t(ch.titleKey), s2, ch.titleKey, isWide);
+      return dashCard(ch.id, t(ch.titleKey), s2, ch.titleKey, isWide, ch.tall);
     }).join("");
 
     box.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.cards.length}">${cardsHtml}</div><div class="dash-cards">${chartsHtml}</div>`;
@@ -1040,10 +1040,7 @@
     const unit = t(cfg.unit);
     const cs = getComputedStyle(document.documentElement);
     if (state.range) {
-      // Aralık modu: takvim yılı sınırını görmezden gelen TEK kronolojik çizgi seti —
-      // "yıl başına ayrı çizgi" karşılaştırması yerine gerçek zaman ekseni (örn.
-      // Tem'25 → Nis'26 tek çizgi).
-      // lineArea tek noktayla (xs.length-1 === 0) bölme hatası verir — en az 2 ay gerekir.
+      // Aralık modu: takvim yılı sınırını görmezden gelen TEK kronolojik çizgi seti
       if ((state.periods || []).length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoMonths">${t("ui.needTwoMonths")}</p>`; return; }
       const ramp = [accent, cs.getPropertyValue("--sea-600").trim(), cs.getPropertyValue("--sky-300").trim()];
       const seriDefs = cfg.series.length
@@ -1055,28 +1052,29 @@
     }
     const avail = curAvail();
     if (!avail.length) return;
+    const ramp = [accent, cs.getPropertyValue("--sea-600").trim(), cs.getPropertyValue("--sky-300").trim()];
+    const labels = avail.map((x) => MON()[x - 1]);
     if (state.years.length > 1) {
+      // Çoklu yıl seçildiğinde: her yıl ayrı sütun grubu — toplam seri, ayrı renkler
       const palette = ["--c-yuk", "--c-konteyner", "--c-gemi", "--c-kruvaziyer", "--c-roro", "--c-bogaz"]
         .map((v) => cs.getPropertyValue(v).trim());
-      const yrsSorted = [...state.years].sort((a, b) => b - a).slice(0, 10);
-      const labels = avail.map((x) => MON()[x - 1]);
+      const yrsSorted = [...state.years].sort((a, b) => b - a).slice(0, 6);
       const series = yrsSorted.map((y, i) => ({
         name: String(y), color: palette[i % palette.length],
         values: avail.map((mo) => mVal(y, mo, "toplam")),
-        edit: monthEditForYear(avail, "toplam", t("ui.total"), y),
+        edit: monthEditForYear(avail, "toplam", String(y), y),
       }));
-      C.lineArea(host, { labels, unit, series });
+      C.columns(host, { labels, unit, series, stacked: false });
     } else {
+      // Tek yıl: gelen/giden renk ayrımıyla yığılı sütun grafik
       const y = state.years[0];
-      const ramp = [accent, cs.getPropertyValue("--sea-600").trim(), cs.getPropertyValue("--sky-300").trim()];
-      const labels = avail.map((x) => MON()[x - 1]);
       const series = cfg.series.length
         ? cfg.series.map((s, i) => ({ name: nm(s), color: ramp[i % ramp.length],
             values: avail.map((mo) => mVal(y, mo, s.k)),
             edit: monthEdit(avail, s.k, nm(s)) }))
         : [{ name: t("ui.total"), color: accent, values: avail.map((mo) => mVal(y, mo, "toplam")),
             edit: monthEdit(avail, "toplam", t("ui.total")) }];
-      C.columns(host, { labels, series, unit, stacked: cfg.series.length > 1 });
+      C.columns(host, { labels, series, unit, stacked: false });
     }
   }
 
@@ -1142,7 +1140,9 @@
         const allBdItems = aggBreakdown(ch.dim, "toplam");
         // shareTotal: yalnız arac_cinsi boyutunda tooltip'te toplama oranı gösterilir
         const shareTotal = ch.dim === "arac_cinsi" ? allBdItems.reduce((s, x) => s + x.deger, 0) : null;
-        const items = allBdItems.slice(0, 10).map((r) => {
+        // tall modda daha fazla satır göster (Hat gibi geniş listeler için)
+        const sliceLimit = ch.tall ? 20 : 10;
+        const items = allBdItems.slice(0, sliceLimit).map((r) => {
           const label = short(r.etiket);
           if (singleYear == null) return { label, value: r.deger, color: accent };
           const m = { kategori: cat, yil: singleYear, boyut: ch.dim, etiket: r.etiket, seri: "toplam" };
@@ -1153,29 +1153,27 @@
         if (items.length) C.bars(host, { unit: t(cfg.unit), items, labelFontSize: 16, ...(shareTotal ? { shareTotal } : {}) });
         else host.innerHTML = `<p class="csub">—</p>`;
       } else if (ch.type === "cinsYearLine") {
-        // Yıllara göre araç cinsi değişimi — breakdown'dan tüm yıllardaki üst 5 ana cinsi çizgi grafik olarak gösterir.
-        // Ana kategori: tire ile başlamayan satırlar (alt-tip satırları häriç).
-        const allBRowsYil = bRows().filter((r) => r.boyut === ch.dim && (!r.seri || r.seri === "toplam"));
-        const allYearsYil = [...new Set(allBRowsYil.map((r) => r.yil))].sort((a, b) => a - b);
+        // Yıllara göre toplam taşınan araç değişimi — aylık toplamlardan yıllık bazına geçilir.
+        // Araç cinslerine göre değil, toplam taşınan araç (gelen+giden) bazında tek çizgi grafik.
+        const allMRows = mRows().filter((r) => r.seri === "toplam");
+        const byYear = {};
+        allMRows.forEach((r) => {
+          byYear[r.yil] = byYear[r.yil] || { sum: 0, months: new Set() };
+          byYear[r.yil].sum += r.deger;
+          byYear[r.yil].months.add(r.ay);
+        });
+        // Yalnızca tam yılları (12 ay verisi olan yıllar) göster
+        const allYearsYil = Object.keys(byYear)
+          .filter((y) => byYear[y].months.size === 12)
+          .map(Number)
+          .sort((a, b) => a - b);
         if (allYearsYil.length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoYears">${t("ui.needTwoYears")}</p>`; return; }
-        const latestYearYil = allYearsYil[allYearsYil.length - 1];
-        const topTypesYil = allBRowsYil
-          .filter((r) => r.yil === latestYearYil && !r.etiket.startsWith("-"))
-          .sort((a, b) => b.deger - a.deger)
-          .slice(0, 5)
-          .map((r) => r.etiket);
-        if (!topTypesYil.length) { host.innerHTML = `<p class="csub">—</p>`; return; }
-        const palYil = ["--c-yuk", "--c-konteyner", "--c-gemi", "--c-kruvaziyer", "--c-roro", "--c-bogaz"]
-          .map((v) => cs.getPropertyValue(v).trim());
-        const seriesYil = topTypesYil.map((etiket, i) => ({
-          name: short(etiket),
-          color: palYil[i % palYil.length],
-          values: allYearsYil.map((y) => {
-            const row = allBRowsYil.find((r) => r.yil === y && r.etiket === etiket);
-            return row ? row.deger : 0;
-          }),
-        }));
-        C.lineArea(host, { labels: allYearsYil.map(String), unit: t(cfg.unit), series: seriesYil });
+        const totalSeries = [{
+          name: t(cfg.unit || "unit.arac"),
+          color: accent,
+          values: allYearsYil.map((y) => byYear[y].sum),
+        }];
+        C.lineArea(host, { labels: allYearsYil.map(String), unit: t(cfg.unit), series: totalSeries });
       } else if (ch.type === "treemap") {
         const cs2 = getComputedStyle(document.documentElement);
         const palette = ["--c-yuk", "--c-konteyner", "--c-gemi", "--c-kruvaziyer", "--c-roro", "--c-bogaz", "--c-kabotaj", "--c-filo"]
