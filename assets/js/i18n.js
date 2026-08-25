@@ -108,7 +108,7 @@
       "series.yukleme": "Yükleme", "series.bosaltma": "Boşaltma",
       "series.turk": "Türk bayraklı", "series.yabanci": "Yabancı bayraklı",
       "series.gelen": "Gelen", "series.giden": "Giden", "series.transit": "Transit",
-      "series.gelenArac": "Gelen araç", "series.gidenArac": "Giden araç",
+      "series.gelenArac": "Gelen Araç", "series.gidenArac": "Giden Araç",
 
       "sea.marmara": "Marmara", "sea.ege": "Ege",
       "sea.akdeniz": "Akdeniz", "sea.karadeniz": "Karadeniz",
@@ -287,7 +287,7 @@
       "series.yukleme": "Loading", "series.bosaltma": "Unloading",
       "series.turk": "Turkish flag", "series.yabanci": "Foreign flag",
       "series.gelen": "Inbound", "series.giden": "Outbound", "series.transit": "Transit",
-      "series.gelenArac": "Inbound vehicles", "series.gidenArac": "Outbound vehicles",
+      "series.gelenArac": "Inbound Vehicles", "series.gidenArac": "Outbound Vehicles",
 
       "sea.marmara": "Marmara", "sea.ege": "Aegean",
       "sea.akdeniz": "Mediterranean", "sea.karadeniz": "Black Sea",

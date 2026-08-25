@@ -1047,7 +1047,7 @@
         ? cfg.series.map((s, i) => ({ k: s.k, name: nm(s), color: ramp[i % ramp.length] }))
         : [{ k: "toplam", name: t("ui.total"), color: accent }];
       const { labels, series } = rangeLineSeries(seriDefs);
-      C.lineArea(host, { labels, unit, series });
+      C.columns(host, { labels, unit, series, stacked: false });
       return;
     }
     const avail = curAvail();
