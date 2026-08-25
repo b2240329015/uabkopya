@@ -53,6 +53,12 @@
     return d;
   }
 
+  // Düz path (Straight lines)
+  function straight(pts) {
+    if (pts.length < 2) return "";
+    return `M${pts[0][0]},${pts[0][1]}` + pts.slice(1).map(p => `L${p[0]},${p[1]}`).join("");
+  }
+
   /* ---------- Line / Area ---------- */
   function lineArea(host, opts) {
     host.innerHTML = "";
@@ -89,7 +95,7 @@
 
     opts.series.forEach((s, si) => {
       const pts = s.values.map((v, i) => [X(i), Y(v)]);
-      const d = smooth(pts);
+      const d = opts.straight ? straight(pts) : smooth(pts);
       if (si === 0) {
         const area = el("path", { d: `${d}L${X(xs.length - 1)},${Y(min)}L${X(0)},${Y(min)}Z`, fill: `url(#${gid})` });
         svg.appendChild(area);

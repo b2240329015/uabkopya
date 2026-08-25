@@ -114,7 +114,7 @@
         { id: "dMonth", type: "monthly", titleKey: "cat.monthTitle", wide: true },
         { id: "dCins", type: "cinsBars", dim: "arac_cinsi", titleKey: "dim.roro.bars" },
         { id: "dCinsYil", type: "cinsYearLine", dim: "arac_cinsi", titleKey: "roro.chartCinsYil" },
-        { id: "dHat", type: "cinsBars", dim: "hat", titleKey: "roro.chartHat", wide: true, tall: true },
+        { id: "dHat", type: "treemap", dim: "hat", titleKey: "roro.chartHat", wide: true, tall: true },
       ],
     },
     bogazlar: {
@@ -1074,7 +1074,7 @@
             edit: monthEdit(avail, s.k, nm(s)) }))
         : [{ name: t("ui.total"), color: accent, values: avail.map((mo) => mVal(y, mo, "toplam")),
             edit: monthEdit(avail, "toplam", t("ui.total")) }];
-      C.columns(host, { labels, series, unit, stacked: false });
+      C.columns(host, { labels, series, unit, stacked: true });
     }
   }
 
@@ -1173,7 +1173,7 @@
           color: accent,
           values: allYearsYil.map((y) => byYear[y].sum),
         }];
-        C.lineArea(host, { labels: allYearsYil.map(String), unit: t(cfg.unit), series: totalSeries });
+        C.lineArea(host, { labels: allYearsYil.map(String), unit: t(cfg.unit), series: totalSeries, straight: true });
       } else if (ch.type === "treemap") {
         const cs2 = getComputedStyle(document.documentElement);
         const palette = ["--c-yuk", "--c-konteyner", "--c-gemi", "--c-kruvaziyer", "--c-roro", "--c-bogaz", "--c-kabotaj", "--c-filo"]
@@ -1376,9 +1376,10 @@
   }
 
   function short(s) {
-    const p = String(s).split("/");
+    let str = String(s).replace(/ve yarı römorklar/gi, "");
+    const p = str.split("/");
     const v = lang() === "en" && p[1] ? p[1] : p[0];
-    return v.replace(/^[\s\-–]+/, "").trim().slice(0, 26);
+    return v.replace(/^[\s\--]+/, "").trim().slice(0, 26);
   }
 
   function renderArchive() {
