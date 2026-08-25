@@ -113,7 +113,8 @@
       charts: [
         { id: "dMonth", type: "monthly", titleKey: "cat.monthTitle", wide: true },
         { id: "dCins", type: "cinsBars", dim: "arac_cinsi", titleKey: "dim.roro.bars" },
-        { id: "dHat", type: "cinsBars", dim: "hat", titleKey: "roro.chartHat" },
+        { id: "dCinsYil", type: "cinsYearLine", dim: "arac_cinsi", titleKey: "roro.chartCinsYil" },
+        { id: "dHat", type: "cinsBars", dim: "hat", titleKey: "roro.chartHat", wide: true },
       ],
     },
     bogazlar: {
@@ -1138,7 +1139,10 @@
         // punto normalden büyük (kullanıcı talebi: "yazılar büyütülsün"). Tek yıl seçiliyse
         // tek satıra karşılık geldiği için düzenlenebilir, çoklu yılda salt-okunur (toplam).
         const singleYear = state.years.length === 1 ? state.years[0] : null;
-        const items = aggBreakdown(ch.dim, "toplam").slice(0, 10).map((r) => {
+        const allBdItems = aggBreakdown(ch.dim, "toplam");
+        // shareTotal: yalnız arac_cinsi boyutunda tooltip'te toplama oranı gösterilir
+        const shareTotal = ch.dim === "arac_cinsi" ? allBdItems.reduce((s, x) => s + x.deger, 0) : null;
+        const items = allBdItems.slice(0, 10).map((r) => {
           const label = short(r.etiket);
           if (singleYear == null) return { label, value: r.deger, color: accent };
           const m = { kategori: cat, yil: singleYear, boyut: ch.dim, etiket: r.etiket, seri: "toplam" };
@@ -1146,8 +1150,32 @@
             edit: { t: "fact_breakdown", m, f: "deger", l: `${label} · ${singleYear}`, k: "num" },
             editLabel: { t: "fact_breakdown", m, f: "etiket", l: `${label} — ad`, k: "text", w: RENAME_WARN } };
         });
-        if (items.length) C.bars(host, { unit: t(cfg.unit), items, labelFontSize: 16 });
+        if (items.length) C.bars(host, { unit: t(cfg.unit), items, labelFontSize: 16, ...(shareTotal ? { shareTotal } : {}) });
         else host.innerHTML = `<p class="csub">—</p>`;
+      } else if (ch.type === "cinsYearLine") {
+        // Yıllara göre araç cinsi değişimi — breakdown'dan tüm yıllardaki üst 5 ana cinsi çizgi grafik olarak gösterir.
+        // Ana kategori: tire ile başlamayan satırlar (alt-tip satırları häriç).
+        const allBRowsYil = bRows().filter((r) => r.boyut === ch.dim && (!r.seri || r.seri === "toplam"));
+        const allYearsYil = [...new Set(allBRowsYil.map((r) => r.yil))].sort((a, b) => a - b);
+        if (allYearsYil.length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoYears">${t("ui.needTwoYears")}</p>`; return; }
+        const latestYearYil = allYearsYil[allYearsYil.length - 1];
+        const topTypesYil = allBRowsYil
+          .filter((r) => r.yil === latestYearYil && !r.etiket.startsWith("-"))
+          .sort((a, b) => b.deger - a.deger)
+          .slice(0, 5)
+          .map((r) => r.etiket);
+        if (!topTypesYil.length) { host.innerHTML = `<p class="csub">—</p>`; return; }
+        const palYil = ["--c-yuk", "--c-konteyner", "--c-gemi", "--c-kruvaziyer", "--c-roro", "--c-bogaz"]
+          .map((v) => cs.getPropertyValue(v).trim());
+        const seriesYil = topTypesYil.map((etiket, i) => ({
+          name: short(etiket),
+          color: palYil[i % palYil.length],
+          values: allYearsYil.map((y) => {
+            const row = allBRowsYil.find((r) => r.yil === y && r.etiket === etiket);
+            return row ? row.deger : 0;
+          }),
+        }));
+        C.lineArea(host, { labels: allYearsYil.map(String), unit: t(cfg.unit), series: seriesYil });
       } else if (ch.type === "treemap") {
         const cs2 = getComputedStyle(document.documentElement);
         const palette = ["--c-yuk", "--c-konteyner", "--c-gemi", "--c-kruvaziyer", "--c-roro", "--c-bogaz", "--c-kabotaj", "--c-filo"]
