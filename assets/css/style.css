@@ -133,7 +133,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; line-height
 /* ---- Title Case: tüm içerik metin öğeleri ---- */
 h1, h2, h3, h4, h5,
 .breadcrumb a, .breadcrumb span,
-.ds-label, .dq-port,
+.dq-label, .ds-label, .dq-port,
 .kpi-label, .kpi-sub, .kpi-go,
 .dq-sub,
 .filter-group > label,
@@ -1093,8 +1093,8 @@ body.cat-quad .cat-filters { position: static; top: auto; }
 .dq-ic, .ds-ic { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: var(--kc); background: color-mix(in srgb, var(--kc) 12%, transparent); }
 .dq-ic svg, .ds-ic svg { width: 15px; height: 15px; }
 .dq-year, .ds-year {
-  font-size: 0.74rem; font-weight: 800; color: var(--text-dim); background: var(--surface-2);
-  border: 1px solid var(--border); padding: 2px 7px; border-radius: 6px; letter-spacing: 0.02em;
+  font-size: 0.74rem; font-weight: 800; color: var(--text-dim);
+  letter-spacing: 0.02em;
 }
 .dq-num, .ds-num {
   font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 2.1vw, 2.05rem);

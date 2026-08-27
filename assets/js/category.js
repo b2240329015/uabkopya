@@ -1180,6 +1180,7 @@
         // Benzer yoğunluktaki hatlar çok yakın mavi tonu alır (önceki index tabanlı sistemin aksine).
         const singleYear = state.years.length === 1 ? state.years[0] : null;
         const rawItems = aggBreakdown(ch.dim, "toplam");
+        const total = rawItems.reduce((s, r) => s + r.deger, 0);
         const maxVal = rawItems.length ? rawItems[0].deger : 1;          // desc sıralı, [0] en büyük
         const minVal = rawItems.length ? rawItems[rawItems.length - 1].deger : 0;
         function blueForValue(val) {
@@ -1194,7 +1195,11 @@
           const [grp, name] = r.etiket.split(" :: ");
           if (!groups.has(grp)) groups.set(grp, true);
           const label = name || r.etiket;
-          const base = { label, group: grp, value: r.deger, color: blueForValue(r.deger) };
+          const pct = total > 0 ? Math.round((r.deger / total) * 100) : 0;
+          const base = { 
+            label, group: grp, value: r.deger, color: blueForValue(r.deger),
+            tipHtml: `<b>${label}</b><br><b>%${pct}</b>`
+          };
           if (singleYear == null) return base;
           const m = { kategori: cat, yil: singleYear, boyut: ch.dim, etiket: r.etiket, seri: "toplam" };
           return Object.assign(base, {
