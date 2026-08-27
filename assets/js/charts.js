@@ -358,22 +358,79 @@
       markEdit(rect, r.edit);
       svg.appendChild(rect);
       requestAnimationFrame(() => (rect.style.opacity = "1"));
-      // Metin sığdırma: daha küçük kutularda da etiket göster
-      if (rw0 > 28 && rh0 > 16) {
-        const availW = rw0 - 14;
-        const fs = Math.max(9, Math.min(13, availW / Math.max(4, r.label.length * 0.58)));
-        const maxChars = Math.max(3, Math.floor(availW / (fs * 0.57)));
-        const labelShort = r.label.length > maxChars ? r.label.slice(0, maxChars - 1) + "…" : r.label;
-        const txt = el("text", { x: rx0 + 7, y: ry0 + 10 + fs * 0.6, "font-size": fs, "font-weight": 600, fill: "#fff" });
-        txt.style.pointerEvents = "none"; txt.textContent = labelShort;
-        svg.appendChild(txt);
-        if (rh0 > 32) {
-          const hv = window.MDUtil.human(r.value);
-          const subFs = Math.max(8, fs - 1);
-          const sub = el("text", { x: rx0 + 7, y: ry0 + 14 + fs + subFs * 0.5, "font-size": subFs, fill: "rgba(255,255,255,.9)" });
-          sub.style.pointerEvents = "none"; sub.textContent = hv.v + (hv.u ? " " + hv.u : "");
-          svg.appendChild(sub);
+      // ---- Metin sığdırma: kelime sarma + clipPath ile kutu sınırını aşmama ----
+      if (rw0 > 18 && rh0 > 12) {
+        const px = 5, py = 4;
+        const availW = rw0 - px * 2;
+        const availH = rh0 - py * 2;
+        // Font büyüklüğü: kutu genişliği ve yüksekliğiyle sınırlı
+        const fs = Math.max(7, Math.min(12, Math.min(availW / 5, availH / 1.5)));
+        const charW = fs * 0.54;   // Poppins ortalama karakter genişliği
+        const lineH = fs * 1.28;
+        // Değer satırı için rezerv alan (kutu yeterince büyükse)
+        const hasVal = rh0 > 32;
+        const linesArea = hasVal ? availH - fs * 1.3 : availH;
+        const maxLines = Math.max(1, Math.floor(linesArea / lineH));
+
+        // Kelime sarma
+        function wrapWords(text, wAvail) {
+          const words = text.split(" ");
+          const out = [];
+          let cur = "";
+          for (const w of words) {
+            const trial = cur ? cur + " " + w : w;
+            if (trial.length * charW <= wAvail) {
+              cur = trial;
+            } else {
+              if (cur) out.push(cur);
+              // Kelime tek başına sığmıyorsa kes
+              const fit = Math.max(1, Math.floor(wAvail / charW) - 1);
+              cur = w.length * charW > wAvail ? w.slice(0, fit) + "…" : w;
+            }
+          }
+          if (cur) out.push(cur);
+          return out;
         }
+
+        let lines = wrapWords(r.label, availW);
+        if (lines.length > maxLines) {
+          lines = lines.slice(0, maxLines);
+          // Son satırın sonuna üç nokta ekle
+          const last = lines[maxLines - 1];
+          const fit = Math.max(1, Math.floor(availW / charW) - 1);
+          lines[maxLines - 1] = (last[last.length - 1] === "…")
+            ? last : last.slice(0, fit) + "…";
+        }
+
+        // clipPath: metin kutunun dışına taşmaz
+        const clipId = "tc" + Math.random().toString(36).slice(2, 7);
+        const clip = el("clipPath", { id: clipId });
+        clip.appendChild(el("rect", { x: rx0, y: ry0, width: rw0, height: rh0 }));
+        svg.appendChild(clip);
+
+        const tg = el("g", { "clip-path": `url(#${clipId})`, "pointer-events": "none" });
+        const startY = ry0 + py + fs;
+        lines.forEach((line, li) => {
+          const t2 = el("text", {
+            x: rx0 + px, y: startY + li * lineH,
+            "font-size": fs, "font-weight": 600, fill: "#fff",
+          });
+          t2.textContent = line;
+          tg.appendChild(t2);
+        });
+
+        if (hasVal) {
+          const hv = window.MDUtil.human(r.value);
+          const subFs = Math.max(7, fs - 1);
+          const subY = ry0 + rh0 - py - 1;
+          const sub = el("text", {
+            x: rx0 + px, y: subY,
+            "font-size": subFs, fill: "rgba(255,255,255,.82)",
+          });
+          sub.textContent = hv.v + (hv.u ? " " + hv.u : "");
+          tg.appendChild(sub);
+        }
+        svg.appendChild(tg);
       }
       rect.addEventListener("mouseenter", () => {
         rect.style.filter = "brightness(1.15)";
