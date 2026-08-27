@@ -129,6 +129,27 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; line-height: 1.08; letter-spacing: -0.02em; margin: 0; }
+
+/* ---- Title Case: tüm içerik metin öğeleri ---- */
+h1, h2, h3, h4, h5,
+.breadcrumb a, .breadcrumb span,
+.dq-label, .ds-label, .dq-port,
+.kpi-label, .kpi-sub, .kpi-go,
+.filter-group > label,
+.arch-cat-title, .arch-year-label,
+.page-title h1, .page-hero h1,
+.dash-card h3, .dash-cards h3,
+.cat-archive h2, .cat-archive-title,
+.site-footer a, .footer-col-title,
+.filter-dd-item span,
+.btn-all, .btn-clear,
+.csub, .chart-tip b {
+  text-transform: capitalize;
+}
+/* SVG eksen / grafik metin etiketleri */
+.chart-holder .axis-label {
+  text-transform: capitalize;
+}
 a { color: inherit; text-decoration: none; }
 img, svg { display: block; max-width: 100%; }
 

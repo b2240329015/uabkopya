@@ -1047,7 +1047,7 @@
         ? cfg.series.map((s, i) => ({ k: s.k, name: nm(s), color: ramp[i % ramp.length] }))
         : [{ k: "toplam", name: t("ui.total"), color: accent }];
       const { labels, series } = rangeLineSeries(seriDefs);
-      C.columns(host, { labels, unit, series, stacked: false });
+      C.columns(host, { labels, unit, series, stacked: true });
       return;
     }
     const avail = curAvail();
@@ -1055,7 +1055,7 @@
     const ramp = [accent, cs.getPropertyValue("--sea-600").trim(), cs.getPropertyValue("--sky-300").trim()];
     const labels = avail.map((x) => MON()[x - 1]);
     if (state.years.length > 1) {
-      // Çoklu yıl seçildiğinde: her yıl ayrı sütun grubu — toplam seri, ayrı renkler
+      // Çoklu yıl seçildiğinde: her yıl ayrı yığılı sütun grubu — toplam seri, ayrı renkler
       const palette = ["--c-yuk", "--c-konteyner", "--c-gemi", "--c-kruvaziyer", "--c-roro", "--c-bogaz"]
         .map((v) => cs.getPropertyValue(v).trim());
       const yrsSorted = [...state.years].sort((a, b) => b - a).slice(0, 6);
@@ -1064,7 +1064,7 @@
         values: avail.map((mo) => mVal(y, mo, "toplam")),
         edit: monthEditForYear(avail, "toplam", String(y), y),
       }));
-      C.columns(host, { labels, unit, series, stacked: false });
+      C.columns(host, { labels, unit, series, stacked: true });
     } else {
       // Tek yıl: gelen/giden renk ayrımıyla yığılı sütun grafik
       const y = state.years[0];
@@ -1175,7 +1175,9 @@
         }];
         C.lineArea(host, { labels: allYearsYil.map(String), unit: t(cfg.unit), series: totalSeries, straight: true });
       } else if (ch.type === "treemap") {
-        const palette = ["#0284c7", "#0369a1", "#075985", "#0c4a6e", "#1e3a8a", "#1e40af", "#1d4ed8"];
+        // Yeşil tonları — en yoğun hat (en yüksek değer) en soluk yeşil alır, azalan değerle koyulaşır.
+        // aggBreakdown zaten desc sıralı döndürür; groups.size arttıkça indeks büyür → daha koyu yeşil.
+        const palette = ["#86efac", "#4ade80", "#22c55e", "#16a34a", "#15803d", "#166534", "#14532d"];
         const groups = new Map();
         const singleYear = state.years.length === 1 ? state.years[0] : null;
         const items = aggBreakdown(ch.dim, "toplam").map((r) => {
