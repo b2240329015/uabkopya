@@ -358,17 +358,19 @@
       markEdit(rect, r.edit);
       svg.appendChild(rect);
       requestAnimationFrame(() => (rect.style.opacity = "1"));
-      // Kutu çok küçükse yazıyı hiç gösterme, büyükse fontu ve uzunluğu ayarla
-      if (rw0 > 50 && rh0 > 28) {
-        const fs = Math.max(10, Math.min(14, rw0 / (r.label.length * 0.55)));
-        const maxChars = Math.max(3, Math.floor(rw0 / (fs * 0.6)));
-        const short = r.label.length > maxChars ? r.label.slice(0, maxChars - 1) + "…" : r.label;
-        const txt = el("text", { x: rx0 + 8, y: ry0 + 14 + fs/2, "font-size": fs, "font-weight": 600, fill: "#fff" });
-        txt.style.pointerEvents = "none"; txt.textContent = short;
+      // Metin sığdırma: daha küçük kutularda da etiket göster
+      if (rw0 > 28 && rh0 > 16) {
+        const availW = rw0 - 14;
+        const fs = Math.max(9, Math.min(13, availW / Math.max(4, r.label.length * 0.58)));
+        const maxChars = Math.max(3, Math.floor(availW / (fs * 0.57)));
+        const labelShort = r.label.length > maxChars ? r.label.slice(0, maxChars - 1) + "…" : r.label;
+        const txt = el("text", { x: rx0 + 7, y: ry0 + 10 + fs * 0.6, "font-size": fs, "font-weight": 600, fill: "#fff" });
+        txt.style.pointerEvents = "none"; txt.textContent = labelShort;
         svg.appendChild(txt);
-        if (rh0 > 45) {
+        if (rh0 > 32) {
           const hv = window.MDUtil.human(r.value);
-          const sub = el("text", { x: rx0 + 8, y: ry0 + 18 + fs, "font-size": 12, fill: "rgba(255,255,255,.9)" });
+          const subFs = Math.max(8, fs - 1);
+          const sub = el("text", { x: rx0 + 7, y: ry0 + 14 + fs + subFs * 0.5, "font-size": subFs, fill: "rgba(255,255,255,.9)" });
           sub.style.pointerEvents = "none"; sub.textContent = hv.v + (hv.u ? " " + hv.u : "");
           svg.appendChild(sub);
         }

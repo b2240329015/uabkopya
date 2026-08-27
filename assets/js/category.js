@@ -1175,19 +1175,27 @@
         }];
         C.lineArea(host, { labels: allYearsYil.map(String), unit: t(cfg.unit), series: totalSeries, straight: true });
       } else if (ch.type === "treemap") {
-        // Yeşil tonları — en yoğun hat (en yüksek değer) en soluk yeşil alır, azalan değerle koyulaşır.
-        // aggBreakdown zaten desc sıralı döndürür; groups.size arttıkça indeks büyür → daha koyu yeşil.
-        const palette = ["#86efac", "#4ade80", "#22c55e", "#16a34a", "#15803d", "#166534", "#14532d"];
-        const groups = new Map();
+        // Mavi tonları — her öğe kendi değeriyle orantılı renk alır.
+        // Yüksek değer → koyu mavi, düşük değer → açık mavi.
+        // Benzer yoğunluktaki hatlar çok yakın mavi tonu alır (önceki index tabanlı sistemin aksine).
         const singleYear = state.years.length === 1 ? state.years[0] : null;
-        const items = aggBreakdown(ch.dim, "toplam").map((r) => {
+        const rawItems = aggBreakdown(ch.dim, "toplam");
+        const maxVal = rawItems.length ? rawItems[0].deger : 1;          // desc sıralı, [0] en büyük
+        const minVal = rawItems.length ? rawItems[rawItems.length - 1].deger : 0;
+        function blueForValue(val) {
+          // Güç (0.45): orta aralıkları uç değerlerden daha iyi ayırt eder
+          const t2 = Math.pow(Math.max(0, val - minVal) / Math.max(1, maxVal - minVal), 0.45);
+          const L = Math.round(70 - t2 * 44); // açık %70 → koyu %26
+          const S = Math.round(72 + t2 * 14); // 72% → 86%
+          return `hsl(213,${S}%,${L}%)`;
+        }
+        const groups = new Map();
+        const items = rawItems.map((r) => {
           const [grp, name] = r.etiket.split(" :: ");
-          if (!groups.has(grp)) groups.set(grp, palette[groups.size % palette.length]);
+          if (!groups.has(grp)) groups.set(grp, true);
           const label = name || r.etiket;
-          const base = { label, group: grp, value: r.deger, color: groups.get(grp) };
+          const base = { label, group: grp, value: r.deger, color: blueForValue(r.deger) };
           if (singleYear == null) return base;
-          // Tek dikdörtgen tek tıklama hedefi olduğu için yalnız değer düzenlenebilir
-          // (ad değişikliği için ayrı bir tıklama alanı yok — treemap'in kompakt yapısı).
           const m = { kategori: cat, yil: singleYear, boyut: ch.dim, etiket: r.etiket, seri: "toplam" };
           return Object.assign(base, {
             edit: { t: "fact_breakdown", m, f: "deger", l: `${grp} — ${label} · ${singleYear}`, k: "num" },
