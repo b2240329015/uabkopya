@@ -435,7 +435,7 @@
       rect.addEventListener("mouseenter", () => {
         rect.style.filter = "brightness(1.15)";
         const hostRect = host.getBoundingClientRect(), sc = hostRect.width / W;
-        const tipHtml = r.tipHtml || `<b>${r.group ? r.group + " — " : ""}${r.label}</b><br><b>${nf.format(r.value)}</b> ${opts.unit || ""}`;
+        const tipHtml = r.tipHtml || `<b>${r.label}</b><br>${nf.format(r.value)}`;
         showTip(tipHtml,
           hostRect.left + (r.x + r.w / 2) * sc, hostRect.top + r.y * sc + window.scrollY);
       });

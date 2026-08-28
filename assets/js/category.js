@@ -1198,7 +1198,7 @@
           const pct = total > 0 ? Math.round((r.deger / total) * 100) : 0;
           const base = { 
             label, group: grp, value: r.deger, color: blueForValue(r.deger),
-            tipHtml: `<b>${label}</b><br><b>%${pct}</b>`
+            tipHtml: `<b>${label}</b><br>${r.deger.toLocaleString(loc)}<br>%${pct}`
           };
           if (singleYear == null) return base;
           const m = { kategori: cat, yil: singleYear, boyut: ch.dim, etiket: r.etiket, seri: "toplam" };
