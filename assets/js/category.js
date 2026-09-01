@@ -148,9 +148,9 @@
       trendKey: null, series: [],
       yearsOnly: true, defaultYearSpan: 5,
       metrics: [
-        { key: "filo_adet", labelKey: "filo.kpiAdet", unitKey: "unit.gemi", agg: "last" },
-        { key: "filo_dwt", labelKey: "filo.kpiDwt", unitKey: "unit.dwt", agg: "last" },
-        { key: "filo_yas_ort", labelKey: "filo.kpiYas", unitKey: "unit.yas", agg: "avg" },
+        { key: "filo_adet", labelKey: "filo.kpiAdet", unitKey: "unit.gemi", agg: "last", exact: true },
+        { key: "filo_dwt", labelKey: "filo.kpiDwt", unitKey: "unit.dwt", agg: "last", exact: true },
+        { key: "filo_yas_ort", labelKey: "filo.kpiYas", unitKey: "unit.yas", agg: "avg", exact: true, dec: 1 },
       ],
       barsDim: { dim: "gemi_cinsi", key: "dim.filo.bars", top: 12 },
     },
@@ -826,9 +826,17 @@
           <div class="dq-sub">${ysum}</div></div>`;
       }
       const val = agg.calc(yrs.map((y) => tr[y]), yrs);
-      const hv = U.human(val);
+      let hv;
+      if (mt.exact) {
+        hv = { v: mt.dec === 1 ? U.nf1.format(val) : U.fmt(val), u: "", uKey: null };
+      } else {
+        hv = U.human(val);
+      }
       const mag = hv.uKey ? `<span data-i18n="${hv.uKey}">${hv.u}</span> ` : "";
-      const sub = `<span data-i18n="${agg.subKey}">${t(agg.subKey)}</span>`;
+      let sub = `<span data-i18n="${agg.subKey}">${t(agg.subKey)}</span>`;
+      if (mt.agg === "avg" && yrs.length === 1) {
+        sub = ysum;
+      }
       return `<div class="dq-card" style="--kc:${accent}">
         <div class="dq-top"><span class="dq-ic">${icon(cfg.ic)}</span><span class="dq-year">${ysum}</span></div>
         <div class="dq-num" data-derived="${agg.note}">${hv.v} <span class="dq-unit">${mag}<span data-i18n="${mt.unitKey}">${t(mt.unitKey)}</span></span></div>
