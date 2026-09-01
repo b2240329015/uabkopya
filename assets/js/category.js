@@ -356,6 +356,13 @@
     if (state.years.length === 1) return String(state.years[0]);
     const sorted = [...state.years].sort((a, b) => a - b);
     if (sorted.length === years.length) return t("ui.all");
+    
+    let isCont = true;
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] !== sorted[i-1] + 1) { isCont = false; break; }
+    }
+    if (isCont) return sorted[0] + " – " + sorted[sorted.length - 1];
+
     if (sorted.length <= 4) return sorted.join(", ");
     return sorted.length + " " + t("ui.yearsSelected");
   }
@@ -848,7 +855,7 @@
     let cards = cfg.metrics.map((mt) => dashCard(mt.key, t(mt.labelKey), ysum, mt.labelKey)).join("");
     if (cfg.barsDim && bRows().some((r) => r.boyut === cfg.barsDim.dim)) {
       const latestY = Math.max(...state.years);
-      cards += dashCard("dBars", t(cfg.barsDim.key), `${latestY} · ${t(cfg.unit)}`, cfg.barsDim.key, true);
+      cards += dashCard("dBars", t(cfg.barsDim.key), `${latestY} · ${t(cfg.unit)}`, cfg.barsDim.key, false);
     }
 
     box.innerHTML = `<div class="dash-quad" style="--card-count:${cfg.metrics.length}">${cardsHtml}</div><div class="dash-cards">${cards}</div>`;
@@ -1049,7 +1056,6 @@
     const cs = getComputedStyle(document.documentElement);
     if (state.range) {
       // Aralık modu: takvim yılı sınırını görmezden gelen TEK kronolojik çizgi seti
-      if ((state.periods || []).length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoMonths">${t("ui.needTwoMonths")}</p>`; return; }
       const ramp = [accent, cs.getPropertyValue("--sea-600").trim(), cs.getPropertyValue("--sky-300").trim()];
       const seriDefs = cfg.series.length
         ? cfg.series.map((s, i) => ({ k: s.k, name: nm(s), color: ramp[i % ramp.length] }))
@@ -1110,7 +1116,6 @@
         }
         const seri = seriFor(ch.seri);
         const { labels, values } = yearlySeriesFor(seri);
-        if (labels.length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoYears">${t("ui.needTwoYears")}</p>`; return; }
         C.lineArea(host, { labels, unit: t(ch.unitKey || cfg.unit),
           series: [{ name: t(ch.seriKey || ("series." + ch.seri)), color: ch.alt ? accent2 : accent, values }] });
       } else if (ch.type === "ports") {
@@ -1173,9 +1178,7 @@
         // Yalnızca tam yılları (12 ay verisi olan yıllar) göster
         const allYearsYil = Object.keys(byYear)
           .filter((y) => byYear[y].months.size === 12)
-          .map(Number)
-          .sort((a, b) => a - b);
-        if (allYearsYil.length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoYears">${t("ui.needTwoYears")}</p>`; return; }
+          .sort();
         const totalSeries = [{
           name: t(cfg.unit || "unit.arac"),
           color: accent,
@@ -1220,7 +1223,6 @@
         // (drawMonthlyChart'ın "toplam" özel-hâline benzer, ancak seri cfg.charts'tan gelir).
         const unit = t(ch.unitKey || cfg.unit), seri = ch.seri;
         if (state.range) {
-          if ((state.periods || []).length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoMonths">${t("ui.needTwoMonths")}</p>`; return; }
           const { labels, series } = rangeLineSeries([{ k: seri, name: t(ch.titleKey), color: accent }]);
           C.lineArea(host, { labels, unit, series });
           return;
@@ -1255,7 +1257,6 @@
           { k: "tanker_tch", name: "TCH", color: cs.getPropertyValue("--sky-300").trim() },
         ];
         if (state.range) {
-          if ((state.periods || []).length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoMonths">${t("ui.needTwoMonths")}</p>`; return; }
           const { labels, series } = rangeLineSeries(TANKER_DEFS);
           C.lineArea(host, { labels, unit, series });
           return;
@@ -1284,7 +1285,6 @@
       if (!host) return;
       const tr = T[mt.key] || {};
       const ys = [...state.years].sort((a, b) => a - b);
-      if (ys.length < 2) { host.innerHTML = `<p class="csub" data-i18n="ui.needTwoYears">${t("ui.needTwoYears")}</p>`; return; }
       const labels = ys.map(String);
       const values = ys.map((y) => tr[y] || 0);
       C.lineArea(host, { labels, unit: t(mt.unitKey), series: [{
@@ -1389,10 +1389,12 @@
     if (bh && cfg.barsDim) {
       const rows = bRows().filter((r) => r.boyut === cfg.barsDim.dim);
       const yr = Math.max(...rows.map((r) => r.yil));
-      const items = rows.filter((r) => r.yil === yr).sort((a, b) => b.deger - a.deger).slice(0, cfg.barsDim.top)
+      const allItems = rows.filter((r) => r.yil === yr);
+      const shareTotal = allItems.reduce((s, r) => s + r.deger, 0);
+      const items = allItems.sort((a, b) => b.deger - a.deger).slice(0, cfg.barsDim.top)
         .map((r) => ({ label: short(r.etiket), value: r.deger, color: accent,
                        edit: bdEdit(r), editLabel: bdEditLabel(r) }));
-      if (items.length) C.bars(bh, { unit, items });
+      if (items.length) C.bars(bh, { unit, items, shareTotal });
     }
   }
 
