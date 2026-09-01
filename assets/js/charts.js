@@ -236,7 +236,7 @@
   function columns(host, opts) {
     host.innerHTML = "";
     const labels = opts.labels, series = opts.series, stacked = !!opts.stacked;
-    const W = 760, H = 420, pad = { t: 14, r: 14, b: 38, l: 50 };
+    const W = 760, H = 230, pad = { t: 14, r: 14, b: 38, l: 50 };
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" });
     const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
     const totals = labels.map((_, i) =>
@@ -260,8 +260,9 @@
       const cx = pad.l + bw * i + bw / 2;
       const tx = el("text", { x: cx, y: H - 6, class: "axis-label", "text-anchor": "middle", "font-size": axisFs });
       tx.textContent = lb; svg.appendChild(tx);
-      // MIN_H: küçük değerlerin hover edilebilmesi için minimum görünür yükseklik
-      const MIN_H = 14;
+      // MIN_H: az/küçük değerli sütunlar tek piksele düşünce fare ile hedeflenemiyordu —
+      // görünür yüksekliği en az birkaç piksele sabitleyip hover'ı garantiliyoruz.
+      const MIN_H = 3;
       if (stacked) {
         let acc = 0;
         series.forEach((se) => {
