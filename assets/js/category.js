@@ -346,9 +346,22 @@
   // selPeriods() kullandığı için iki modda da doğru: legacy'de her yıl aynı ayları,
   // aralık modunda yılın gerçekte kapsanan aylarını toplar.
   function yearlySeriesFor(seri) {
+    let ys = [...state.years].sort((a, b) => a - b);
+    if (ys.length === 1 && !state.range) {
+      const y = ys[0];
+      const allYs = [...years].sort((a, b) => a - b);
+      const idx = allYs.indexOf(y);
+      if (idx !== -1) {
+        const span = cfg.defaultYearSpan || 5;
+        ys = allYs.slice(Math.max(0, idx - span + 1), idx + 1);
+      }
+    }
     const byYear = {};
-    selPeriods().forEach(({ y, mo }) => { byYear[y] = (byYear[y] || 0) + mVal(y, mo, seri); });
-    const ys = Object.keys(byYear).map(Number).sort((a, b) => a - b);
+    ys.forEach((y) => {
+      state.months.forEach((mo) => {
+        byYear[y] = (byYear[y] || 0) + mVal(y, mo, seri);
+      });
+    });
     return { labels: ys.map(String), values: ys.map((y) => byYear[y]) };
   }
   function yearsSummary() {
@@ -1284,7 +1297,16 @@
       const host = document.getElementById(mt.key);
       if (!host) return;
       const tr = T[mt.key] || {};
-      const ys = [...state.years].sort((a, b) => a - b);
+      let ys = [...state.years].sort((a, b) => a - b);
+      if (ys.length === 1) {
+        const y = ys[0];
+        const allYs = [...years].sort((a, b) => a - b);
+        const idx = allYs.indexOf(y);
+        if (idx !== -1) {
+          const span = cfg.defaultYearSpan || 5;
+          ys = allYs.slice(Math.max(0, idx - span + 1), idx + 1);
+        }
+      }
       const labels = ys.map(String);
       const values = ys.map((y) => tr[y] || 0);
       C.lineArea(host, { labels, unit: t(mt.unitKey), series: [{
