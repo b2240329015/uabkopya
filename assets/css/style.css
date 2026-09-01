@@ -1004,9 +1004,9 @@ body.cat-quad .cat-filters { position: static; top: auto; }
 .rc-nav[disabled] { opacity: 0.35; cursor: default; }
 .rc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .rc-cell {
-  padding: 7px 2px; border-radius: 7px; font-size: 0.78rem; font-weight: 700;
+  padding: 6px 2px; border-radius: 7px; font-size: 0.68rem; font-weight: 700;
   background: var(--surface-2); border: 1px solid transparent; color: var(--text-soft);
-  cursor: pointer; transition: 0.15s;
+  cursor: pointer; transition: 0.15s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .rc-cell:hover:not([disabled]) { border-color: var(--accent); color: var(--white); }
 .rc-cell[disabled] { opacity: 0.28; cursor: default; }
