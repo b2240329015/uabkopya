@@ -245,7 +245,7 @@
     let max = Math.max(...totals, 1) * 1.12;
     const Y = (v) => pad.t + ih - (ih * v) / max;
     const bw = iw / labels.length;
-    const inner = Math.min(bw * 0.66, 42);
+    const inner = Math.min(bw * 0.82, 58);
 
     for (let i = 0; i <= 4; i++) {
       const v = (max * i) / 4, y = Y(v);

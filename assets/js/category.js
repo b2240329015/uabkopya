@@ -93,10 +93,8 @@
         { type: "topMonth", seri: "toplam", labelKey: "kruvaziyer.kpiTopMonth", unitKey: "unit.yolcu" },
       ],
       charts: [
-        { id: "dMonth", type: "monthly", titleKey: "cat.monthTitle" },
-        { id: "dTrend", type: "singleSeries", titleKey: "cat.trendTitle" },
-        { id: "dPorts", type: "portsShare", seri: "toplam", titleKey: "cat.portsTitle" },
-        { id: "dPortsGemi", type: "ports", seri: "toplam", unitKey: "unit.yolcu", titleKey: "kruvaziyer.chartPortsGemi" },
+        { id: "dMonth", type: "monthly", titleKey: "cat.monthTitle", wide: true },
+        { id: "dTrend", type: "singleSeries", titleKey: "cat.trendTitle", wide: true },
       ],
     },
     roro: {
@@ -1094,7 +1092,7 @@
           const tr = catTrend();
           if (tr) {
             const ys = Object.keys(tr).sort();
-            C.lineArea(host, { labels: ys, unit: t(cfg.unit), series: [{
+            C.lineArea(host, { labels: ys, unit: t(cfg.unit), straight: true, series: [{
               name: t("cat.trendTitle"), color: accent, values: ys.map((y) => tr[y])
             }] });
             return;

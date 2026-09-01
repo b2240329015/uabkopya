@@ -134,7 +134,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; line-height
 h1, h2, h3, h4, h5,
 .breadcrumb a, .breadcrumb span,
 .kpi-label, .kpi-sub, .kpi-go,
-.dq-sub,
+.dq-sub, .dq-label, .dq-year, .dq-port,
 .filter-group > label,
 .arch-cat-title, .arch-year-label,
 .page-title h1, .page-hero h1,
