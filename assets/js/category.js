@@ -15,6 +15,7 @@
   const lang = () => (window.MDLang && window.MDLang.get()) || "tr";
   // Ay adları da içerikten gelir (panelden düzenlenebilsin)
   const MON = () => Array.from({ length: 12 }, (_, i) => t("month." + (i + 1)));
+  const MONLONG = () => Array.from({ length: 12 }, (_, i) => t("month.long." + (i + 1)));
   const nm = (o) => t(o.key);
   // Deniz bölgeleri: filtre DB'deki Türkçe değere göre, etiket içerik anahtarından
   const SEAS = [["Marmara", "sea.marmara"], ["Ege", "sea.ege"],
@@ -999,7 +1000,7 @@
       return {
         year: ysum,
         valueHtml: `${hv.v} <span class="dq-unit">${mag}<span data-i18n="${cd.unitKey}">${t(cd.unitKey)}</span></span>`,
-        port: MON()[top.mo - 1],
+        port: MONLONG()[top.mo - 1],
         note: NOTE_TOP, yearly: true,
       };
     }

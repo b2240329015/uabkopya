@@ -104,6 +104,9 @@
       "month.1": "Oca", "month.2": "Şub", "month.3": "Mar", "month.4": "Nis",
       "month.5": "May", "month.6": "Haz", "month.7": "Tem", "month.8": "Ağu",
       "month.9": "Eyl", "month.10": "Eki", "month.11": "Kas", "month.12": "Ara",
+      "month.long.1": "Ocak", "month.long.2": "Şubat", "month.long.3": "Mart", "month.long.4": "Nisan",
+      "month.long.5": "Mayıs", "month.long.6": "Haziran", "month.long.7": "Temmuz", "month.long.8": "Ağustos",
+      "month.long.9": "Eylül", "month.long.10": "Ekim", "month.long.11": "Kasım", "month.long.12": "Aralık",
 
       "series.yukleme": "Yükleme", "series.bosaltma": "Boşaltma",
       "series.turk": "Türk bayraklı", "series.yabanci": "Yabancı bayraklı",
@@ -289,6 +292,9 @@
       "month.1": "Jan", "month.2": "Feb", "month.3": "Mar", "month.4": "Apr",
       "month.5": "May", "month.6": "Jun", "month.7": "Jul", "month.8": "Aug",
       "month.9": "Sep", "month.10": "Oct", "month.11": "Nov", "month.12": "Dec",
+      "month.long.1": "January", "month.long.2": "February", "month.long.3": "March", "month.long.4": "April",
+      "month.long.5": "May", "month.long.6": "June", "month.long.7": "July", "month.long.8": "August",
+      "month.long.9": "September", "month.long.10": "October", "month.long.11": "November", "month.long.12": "December",
 
       "series.yukleme": "Loading", "series.bosaltma": "Unloading",
       "series.turk": "Turkish flag", "series.yabanci": "Foreign flag",
