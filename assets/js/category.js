@@ -94,7 +94,8 @@
       ],
       charts: [
         { id: "dMonth", type: "monthly", titleKey: "cat.monthTitle", wide: true },
-        { id: "dTrend", type: "singleSeries", titleKey: "cat.trendTitle", wide: true },
+        { id: "dTrend", type: "singleSeries", titleKey: "cat.trendTitle" },
+        { id: "dPorts", type: "portsShare", seri: "toplam", titleKey: "cat.portsTitle" },
       ],
     },
     roro: {
