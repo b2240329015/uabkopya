@@ -1300,15 +1300,16 @@
     const bh = document.getElementById("dBars");
     if (bh && cfg.barsDim) {
       const y = Math.max(...state.years);
-      const items = bRows().filter((r) => r.boyut === cfg.barsDim.dim && r.seri === "adet" && r.yil === y)
-        .sort((a, b) => b.deger - a.deger).slice(0, cfg.barsDim.top).map((r) => {
+      const rows = bRows().filter((r) => r.boyut === cfg.barsDim.dim && r.seri === "adet" && r.yil === y);
+      const shareTotal = rows.reduce((s, r) => s + r.deger, 0);
+      const items = rows.sort((a, b) => b.deger - a.deger).slice(0, cfg.barsDim.top).map((r) => {
         const label = short(r.etiket);
         const m = { kategori: cat, yil: y, boyut: cfg.barsDim.dim, etiket: r.etiket, seri: "adet" };
         return { label, value: r.deger, color: accent,
           edit: { t: "fact_breakdown", m, f: "deger", l: `${label} · ${y}`, k: "num" },
           editLabel: { t: "fact_breakdown", m, f: "etiket", l: `${label} — ad`, k: "text", w: RENAME_WARN } };
       });
-      if (items.length) C.bars(bh, { unit: t(cfg.unit), items });
+      if (items.length) C.bars(bh, { unit: t(cfg.unit), items, shareTotal });
       else bh.innerHTML = `<p class="csub">—</p>`;
     }
   }
