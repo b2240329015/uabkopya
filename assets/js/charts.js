@@ -113,7 +113,7 @@
         dot.addEventListener("mouseenter", () => {
           dot.setAttribute("r", 6);
           const rect = host.getBoundingClientRect(), sc = rect.width / W;
-          showTip(`<b>${xs[i]}</b> — <span style="text-transform: capitalize;">${s.name}</span><br><b>${nf.format(s.values[i])}</b> ${opts.unit || ""}`,
+          showTip(`<b>${xs[i]}</b> — ${s.name}<br><b>${nf.format(s.values[i])}</b> ${opts.unit || ""}`,
             rect.left + p[0] * sc, rect.top + p[1] * sc + window.scrollY);
         });
         dot.addEventListener("mouseleave", () => { dot.setAttribute("r", 4); hideTip(); });
@@ -294,7 +294,7 @@
       node.addEventListener("mouseenter", () => {
         node.style.opacity = "0.82";
         const rect = hostEl.getBoundingClientRect(), sc = rect.width / WW;
-        showTip(`<b>${lb}</b> — <span style="text-transform: capitalize;">${se.name}</span><br><b>${nf.format(v)}</b> ${opts2.unit || ""}`,
+        showTip(`<b>${lb}</b> — ${se.name}<br><b>${nf.format(v)}</b> ${opts2.unit || ""}`,
           rect.left + tipX * sc, rect.top + tipY * sc + window.scrollY);
       });
       node.addEventListener("mouseleave", () => { node.style.opacity = "1"; hideTip(); });

@@ -143,7 +143,7 @@ h1, h2, h3, h4, h5,
 .site-footer a, .footer-col-title,
 .filter-dd-item span,
 .btn-all, .btn-clear,
-.csub, .chart-tip b {
+.csub, .chart-tip {
   text-transform: capitalize;
 }
 /* SVG eksen / grafik metin etiketleri */
