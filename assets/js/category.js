@@ -128,9 +128,11 @@
         { type: "sum", seri: "ugraksiz", labelKey: "bogazlar.kpiUgraksiz", unitKey: "unit.gemi" },
       ],
       charts: [
-        { id: "dTanker", type: "tankerLine", titleKey: "bogazlar.chartTanker", unitKey: "unit.gemi", wide: true },
         { id: "dGemi", type: "monthlySeries", seri: "toplam", titleKey: "bogazlar.chartGemi", unitKey: "unit.gemi" },
         { id: "dGrossTon", type: "monthlySeries", seri: "gros_ton", titleKey: "bogazlar.chartGrossTon", unitKey: "unit.grosston" },
+        { id: "dBoy", type: "boyBars", dim: "gemi_boyu", titleKey: "bogazlar.chartBoy", unitKey: "unit.gemi" },
+        { id: "dCins", type: "cinsBarsBogazlar", dim: "gemi_cinsi", titleKey: "bogazlar.chartCins", unitKey: "unit.gemi" },
+        { id: "dTanker", type: "tankerLine", titleKey: "bogazlar.chartTanker", unitKey: "unit.gemi", wide: true },
       ],
     },
     kabotaj: {
@@ -1286,6 +1288,25 @@
           edit: singleYear != null ? monthEditForYear(avail, seri, name, singleYear) : null,
         }));
         C.lineArea(host, { labels, unit, series });
+      } else if (ch.type === "boyBars" || ch.type === "cinsBarsBogazlar") {
+        // Boğazlar: Boylarına Göre (gemi_boyu) ve Cinslerine Göre (gemi_cinsi) kırılımı.
+        // fact_breakdown tablosundaki yıllık verilerden seçili yılların toplamı gösterilir.
+        const unit = t(ch.unitKey || cfg.unit);
+        const singleYear = state.years.length === 1 ? state.years[0] : null;
+        const allBdItems = aggBreakdown(ch.dim, "toplam");
+        if (!allBdItems.length) {
+          host.innerHTML = `<p class="csub" data-i18n="cat.noData">${t("cat.noData") || "—"}</p>`;
+          return;
+        }
+        const items = allBdItems.slice(0, 15).map((r) => {
+          const label = short(r.etiket);
+          if (singleYear == null) return { label, value: r.deger, color: accent };
+          const m = { kategori: cat, yil: singleYear, boyut: ch.dim, etiket: r.etiket, seri: "toplam" };
+          return { label, value: r.deger, color: accent,
+            edit: { t: "fact_breakdown", m, f: "deger", l: `${label} · ${singleYear}`, k: "num" },
+            editLabel: { t: "fact_breakdown", m, f: "etiket", l: `${label} — ad`, k: "text", w: RENAME_WARN } };
+        });
+        C.bars(host, { unit, items });
       }
     });
   }
@@ -1490,9 +1511,11 @@
       // fact_strait: kendi kategorili değil, bogaz sütunuyla ayrışır — monthly şekline dönüştürülür.
       // Tanker (TTA/LPG/TCH) kırılımı ise gerçek fact_monthly satırları (kategori="bogazlar") —
       // ikisi aynı DET.monthly dizisinde birleşir, mVal()/sumSel() ayrım gözetmeden okur.
-      const [rows, tankerRows] = await Promise.all([
+      // fact_breakdown: gemi_boyu ve gemi_cinsi kırılımları buradan okunur.
+      const [rows, tankerRows, bdRows] = await Promise.all([
         get("fact_strait?select=*&bogaz=eq.istanbul"),
         get("fact_monthly?select=*&kategori=eq.bogazlar"),
+        get("fact_breakdown?select=*&kategori=eq.bogazlar"),
       ]);
       if (!Array.isArray(rows) || !rows.length) throw new Error("boş fact_strait");
       const monthly = [];
@@ -1502,7 +1525,7 @@
         if (r.ugraksiz_gemi != null) monthly.push({ kategori: "bogazlar", yil: r.yil, ay: r.ay, seri: "ugraksiz", deger: +r.ugraksiz_gemi });
       });
       (tankerRows || []).forEach((r) => monthly.push({ kategori: "bogazlar", yil: r.yil, ay: r.ay, seri: r.seri, deger: +r.deger }));
-      return { monthly, ports: [], breakdown: [] };
+      return { monthly, ports: [], breakdown: Array.isArray(bdRows) ? bdRows : [] };
     }
     const q = `kategori=eq.${catSlug}`;
     const [monthly, ports, breakdown, country] = await Promise.all([
