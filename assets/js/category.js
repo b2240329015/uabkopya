@@ -128,11 +128,11 @@
         { type: "sum", seri: "ugraksiz", labelKey: "bogazlar.kpiUgraksiz", unitKey: "unit.gemi" },
       ],
       charts: [
-        { id: "dGemi", type: "monthlySeries", seri: "toplam", titleKey: "bogazlar.chartGemi", unitKey: "unit.gemi" },
+        { id: "dGemi", type: "monthlySeries", seri: "toplam", titleKey: "bogazlar.chartGemi", unitKey: "unit.gemi", wide: true },
         { id: "dGrossTon", type: "monthlySeries", seri: "gros_ton", titleKey: "bogazlar.chartGrossTon", unitKey: "unit.grosston" },
         { id: "dBoy", type: "boyBars", dim: "gemi_boyu", titleKey: "bogazlar.chartBoy", unitKey: "unit.gemi" },
         { id: "dCins", type: "cinsBarsBogazlar", dim: "gemi_cinsi", titleKey: "bogazlar.chartCins", unitKey: "unit.gemi" },
-        { id: "dTanker", type: "tankerLine", titleKey: "bogazlar.chartTanker", unitKey: "unit.gemi", wide: true },
+        { id: "dTanker", type: "tankerLine", titleKey: "bogazlar.chartTanker", unitKey: "unit.gemi" },
       ],
     },
     kabotaj: {
@@ -815,7 +815,7 @@
       if (ch.type === "monthly") s2 = `${ysum} · ${unit}${capNote}`;
       else if (ch.type === "singleSeries") s2 = `${subCounts}${capNote}`;
       else s2 = `${ysum} · ${t(ch.unitKey || cfg.unit)}`;
-      const isWide = ch.wide || (ch.type === "monthly") || (ch.type === "tankerLine") || (cfg.charts.length % 2 === 1 && idx === 0);
+      const isWide = ch.wide || (ch.type === "monthly") || (cfg.charts.length % 2 === 1 && idx === 0);
       return dashCard(ch.id, t(ch.titleKey), s2, ch.titleKey, isWide, ch.tall);
     }).join("");
 
@@ -1290,12 +1290,15 @@
         C.lineArea(host, { labels, unit, series });
       } else if (ch.type === "boyBars" || ch.type === "cinsBarsBogazlar") {
         // Boğazlar: Boylarına Göre (gemi_boyu) ve Cinslerine Göre (gemi_cinsi) kırılımı.
-        // fact_breakdown tablosundaki yıllık verilerden seçili yılların toplamı gösterilir.
+        // Veri fact_breakdown tablosundan gelir (kategori='bogazlar', boyut='gemi_boyu'|'gemi_cinsi').
         const unit = t(ch.unitKey || cfg.unit);
         const singleYear = state.years.length === 1 ? state.years[0] : null;
         const allBdItems = aggBreakdown(ch.dim, "toplam");
         if (!allBdItems.length) {
-          host.innerHTML = `<p class="csub" data-i18n="cat.noData">${t("cat.noData") || "—"}</p>`;
+          const noDataMsg = lang() === "en"
+            ? "No breakdown data available for this strait yet."
+            : "Bu boğaz için kırılım verisi henüz girilmemiş.";
+          host.innerHTML = `<p class="csub">${noDataMsg}</p>`;
           return;
         }
         const items = allBdItems.slice(0, 15).map((r) => {
