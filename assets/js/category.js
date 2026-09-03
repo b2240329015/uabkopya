@@ -128,11 +128,11 @@
         { type: "sum", seri: "ugraksiz", labelKey: "bogazlar.kpiUgraksiz", unitKey: "unit.gemi" },
       ],
       charts: [
-        { id: "dGemi", type: "monthlySeries", seri: "toplam", titleKey: "bogazlar.chartGemi", unitKey: "unit.gemi", wide: true },
-        { id: "dGrossTon", type: "monthlySeries", seri: "gros_ton", titleKey: "bogazlar.chartGrossTon", unitKey: "unit.grosston", wide: true },
+        { id: "dBoy", type: "boyBars", dim: "gemi_boyu", titleKey: "bogazlar.chartBoy", unitKey: "unit.gemi", wide: true },
         { id: "dCins", type: "cinsBarsBogazlar", dim: "gemi_cinsi", titleKey: "bogazlar.chartCins", unitKey: "unit.gemi" },
         { id: "dTanker", type: "tankerLine", titleKey: "bogazlar.chartTanker", unitKey: "unit.gemi" },
-        { id: "dBoy", type: "boyBars", dim: "gemi_boyu", titleKey: "bogazlar.chartBoy", unitKey: "unit.gemi", wide: true },
+        { id: "dGemi", type: "monthlySeries", seri: "toplam", titleKey: "bogazlar.chartGemi", unitKey: "unit.gemi", wide: true },
+        { id: "dGrossTon", type: "monthlySeries", seri: "gros_ton", titleKey: "bogazlar.chartGrossTon", unitKey: "unit.grosston", wide: true },
       ],
     },
     kabotaj: {
@@ -321,8 +321,15 @@
     return Object.keys(agg).map((etiket) => ({ etiket, deger: Math.round(agg[etiket]) })).sort((a, b) => b.deger - a.deger);
   }
   // Genel amaçlı yıllık kırılım toplamı — herhangi bir boyut+seri için (roro: arac_cinsi, hat).
+  // Boğazlar sayfasında fact_breakdown'da bogaz sütunu var — state.bogaz'a göre filtrelenir.
   function aggBreakdown(boyut, seri) {
-    const rows = bRows().filter((r) => r.boyut === boyut && (!seri || !r.seri || r.seri === seri || seri === "toplam") && state.years.includes(r.yil));
+    const bogaz = (cat === "bogazlar") ? (state.bogaz || "istanbul") : null;
+    const rows = bRows().filter((r) =>
+      r.boyut === boyut &&
+      (!seri || !r.seri || r.seri === seri || seri === "toplam") &&
+      state.years.includes(r.yil) &&
+      (bogaz == null || r.bogaz === bogaz || r.bogaz == null)
+    );
     const rm = yearRatioMap();
     const agg = {};
     rows.forEach((r) => { agg[r.etiket] = (agg[r.etiket] || 0) + (r.deger * (rm[r.yil] ?? 1)); });
@@ -425,6 +432,19 @@
   function wireBtnGroup(box, name, field) {
     box.querySelectorAll("[data-" + name + "]").forEach((b) => b.addEventListener("click", () => {
       state[field] = b.dataset[name];
+      // Boğazlar sayfasında bogaz filtresi değişince fact_strait verisi yeniden yüklenir
+      if (cat === "bogazlar" && field === "bogaz") {
+        renderFilters();
+        loadDetailFromSupabase("bogazlar").then((live) => {
+          if (live && (live.monthly?.length || live.breakdown?.length)) {
+            DET = live;
+            computeYears();
+            resetToDefaultRange();
+          }
+          renderDash();
+        }).catch(() => renderDash());
+        return;
+      }
       renderFilters(); renderDash();
     }));
   }
@@ -1515,9 +1535,10 @@
       // Tanker (TTA/LPG/TCH) kırılımı ise gerçek fact_monthly satırları (kategori="bogazlar") —
       // ikisi aynı DET.monthly dizisinde birleşir, mVal()/sumSel() ayrım gözetmeden okur.
       // fact_breakdown: gemi_boyu ve gemi_cinsi kırılımları buradan okunur.
+      const bogaz = (state && state.bogaz) || "istanbul";
       const [rows, tankerRows, bdRows] = await Promise.all([
-        get("fact_strait?select=*&bogaz=eq.istanbul"),
-        get("fact_monthly?select=*&kategori=eq.bogazlar"),
+        get(`fact_strait?select=*&bogaz=eq.${bogaz}`),
+        get(`fact_monthly?select=*&kategori=eq.bogazlar`),
         get("fact_breakdown?select=*&kategori=eq.bogazlar"),
       ]);
       if (!Array.isArray(rows) || !rows.length) throw new Error("boş fact_strait");
