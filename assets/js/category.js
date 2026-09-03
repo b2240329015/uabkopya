@@ -129,10 +129,10 @@
       ],
       charts: [
         { id: "dGemi", type: "monthlySeries", seri: "toplam", titleKey: "bogazlar.chartGemi", unitKey: "unit.gemi", wide: true },
-        { id: "dGrossTon", type: "monthlySeries", seri: "gros_ton", titleKey: "bogazlar.chartGrossTon", unitKey: "unit.grosston" },
-        { id: "dBoy", type: "boyBars", dim: "gemi_boyu", titleKey: "bogazlar.chartBoy", unitKey: "unit.gemi" },
+        { id: "dGrossTon", type: "monthlySeries", seri: "gros_ton", titleKey: "bogazlar.chartGrossTon", unitKey: "unit.grosston", wide: true },
         { id: "dCins", type: "cinsBarsBogazlar", dim: "gemi_cinsi", titleKey: "bogazlar.chartCins", unitKey: "unit.gemi" },
         { id: "dTanker", type: "tankerLine", titleKey: "bogazlar.chartTanker", unitKey: "unit.gemi" },
+        { id: "dBoy", type: "boyBars", dim: "gemi_boyu", titleKey: "bogazlar.chartBoy", unitKey: "unit.gemi", wide: true },
       ],
     },
     kabotaj: {
